@@ -1,6 +1,6 @@
 # SciBlend: Advanced Scientific Visualization for Blender v.1.0.0
 
-SciBlend is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit) within Blender's Python environment.
+SciBlend Advanced-Core is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit) within Blender's Python environment.
 
 SciBlend bridges the gap between scientific data processing and high-quality 3D visualization. By integrating VTK capabilities directly into Blender, SciBlend allows researchers and scientists to create stunning, photorealistic visualizations of complex scientific data.
 
@@ -161,5 +161,4 @@ Contributions are welcome! Feel free to open issues or submit pull requests to i
 
 ## Support
 
-For questions, issues, or feature requests, please use the GitHub issue tracker or contact the maintainer at marinfarinajose@gmail.com.
-
+For questions, issues, or feature requests, please use the GitHub issue tracker or contact the maintainer at info@sciblend.com.
