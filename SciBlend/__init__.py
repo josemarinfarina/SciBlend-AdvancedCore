@@ -77,7 +77,7 @@ class SciBlendPanel(bpy.types.Panel):
         box.label(text="Import", icon='IMPORT')
         box.operator("import_x3d.static", text="Import Static X3D", icon='IMPORT')
         box.operator("import_x3d.animation", text="Import X3D Animation", icon='SEQUENCE')
-        box.operator("import_vtk.animation", text="Import VTK Animation", icon='SEQUENCE')
+        box.operator("import_vtk.animation", text="Import VTK/VTU/PVTU Animation", icon='SEQUENCE')
 
         # Settings section
         box = layout.box()
@@ -102,7 +102,7 @@ class SciBlendPanel(bpy.types.Panel):
         box.operator("import_x3d.create_null", text="Create Null", icon='EMPTY_AXIS')
         box.operator("import_x3d.parent_null_to_geo", text="Parent Null to Geo", icon='OBJECT_DATAMODE')
         box.operator("import_x3d.null_to_origin", text="Null to Origin", icon='EMPTY_AXIS')
-        box.operator("object.center_null_to_origin", text="Center Null to Origin", icon='EMPTY_AXIS')
+        box.operator("import_x3d.null_to_origin", text="Center Null to Origin", icon='EMPTY_AXIS')
         box.operator("object.group_objects", text="Group Objects", icon='GROUP')
 
         # Render Presets section

@@ -1,10 +1,10 @@
-# SciBlend: Advanced Scientific Visualization for Blender v.1.0.0
+# SciBlend: Advanced Scientific Visualization for Blender v.2.0.0
 
 SciBlend AdvancedCore is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit) within Blender's Python environment.
 
-SciBlend bridges the gap between scientific data processing and high-quality 3D visualization. By integrating VTK capabilities directly into Blender, SciBlend allows researchers and scientists to create stunning, photorealistic visualizations of complex scientific data.
+SciBlend bridges the gap between scientific data processing and high-quality 3D visualization. By integrating VTK, VTU and PVTU capabilities directly into Blender, SciBlend allows researchers and scientists to create stunning, photorealistic visualizations of complex scientific data.
 
-Unlike SciBlend-Core, which primarily focused on importing data from Paraview, this advanced version offers deeper integration with scientific data formats through VTK, allowing for more sophisticated data manipulations and visualizations directly within Blender.
+Unlike SciBlend-Core, which primarily focused on importing data from Paraview, this advanced version offers deeper integration with scientific data formats through VTK, VTU and PVTU, allowing for more sophisticated data manipulations and visualizations directly within Blender.
 
 ## Table of Contents
 
@@ -20,7 +20,18 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
 
 ## Features
 
-- **Direct VTK Import**: Import VTK files directly into Blender, preserving complex scientific data structures.
+- **Comprehensive Format Support**: 
+  - Import VTK (.vtk) files with legacy format support
+  - Full support for XML UnstructuredGrid Format (.vtu)
+  - Support for Parallel XML UnstructuredGrid Format (.pvtu)
+  - Preserves complex scientific data structures and attributes
+
+- **Advanced Cell Type Support**:
+  - Basic Elements: Vertex, Line, Pixel, Triangle Strip, Quad, Polygon
+  - 3D Elements: Tetrahedron, Hexahedron, Wedge, Pyramid, Voxel
+  - Advanced Elements: Hexagonal Prism, Pentagonal Prism, Polyhedron
+  - Linear Elements: Polyline, Poly-Vertex
+
 - **Advanced Animation Support**: Create smooth animations from time-series data with automatic keyframing.
 - **Dynamic Material Management**: Automatically generate and apply materials based on data attributes.
 - **Geometry Organization**: Efficiently organize imported geometry into collections for better scene management.
@@ -145,9 +156,23 @@ After installing VTK, there may be some compatibility issues with certain import
 ## Usage
 
 1. Open the SciBlend panel in the 3D Viewport sidebar.
-2. Use the "Import VTK Animation" option to import your VTK files.
-3. Adjust import settings as needed (scale, axis orientation, frame range).
-4. Use the various tools provided to organize, manipulate, and visualize your data.
+2. Use the "Import VTK Animation" option to import your files:
+   - For .vtk files (Legacy VTK format): Select your .vtk files in your sequence.
+   - For .vtu files (XML UnstructuredGrid format): Select ALL .vtu files in your sequence.
+   - For .pvtu files (Parallel XML UnstructuredGrid format): Select ALL .pvtu files in your sequence.
+3. Click "Import VTK/VTU/PVTU Animation" to start the import process.
+4. Adjust import settings as needed (scale, axis orientation, frame range).
+5. Use the various tools provided to organize, manipulate, and visualize your data.
+
+### Importing Animation Sequences
+
+When working with animation sequences:
+- For .vtu files: Select all the files in your time series (e.g., time_0.vtu, time_1.vtu, time_2.vtu, etc.)
+- For .pvtu files: Select all the parallel files in your sequence
+- The addon will automatically create keyframes and handle the animation timing
+- Files will be imported in alphabetical order, so ensure your files are properly numbered
+
+Note: The import process may take some time depending on the size and number of files in your sequence.
 
 ## Advanced Features
 
