@@ -8,6 +8,7 @@ import logging
 import vtk
 import numpy as np
 import mathutils
+import math
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -308,16 +309,16 @@ class ImportVTKAnimationOperator(Operator, ImportHelper):
         extension = os.path.splitext(filepath)[1].lower()
         
         if extension == '.vtk':
-            ug_reader = vtk.vtkUnstructuredGridReader()
-            ug_reader.SetFileName(filepath)
-            ug_reader.Update()
-            data = ug_reader.GetOutput()
+            reader = vtk.vtkUnstructuredGridReader()
+            reader.SetFileName(filepath)
+            reader.Update()
+            data = reader.GetOutput()
 
             if data is None or data.GetNumberOfPoints() == 0:
-                poly_reader = vtk.vtkPolyDataReader()
-                poly_reader.SetFileName(filepath)
-                poly_reader.Update()
-                data = poly_reader.GetOutput()
+                reader = vtk.vtkPolyDataReader()
+                reader.SetFileName(filepath)
+                reader.Update()
+                data = reader.GetOutput()
 
         elif extension == '.vtu':
             reader = vtk.vtkXMLUnstructuredGridReader()
@@ -332,15 +333,22 @@ class ImportVTKAnimationOperator(Operator, ImportHelper):
         else:
             raise ValueError(f"Unsupported file extension: {extension}")
 
-        points = data.GetPoints()
+        converter = vtk.vtkCellDataToPointData()
+        converter.SetInputData(data)
+        converter.PassCellDataOn()
+        converter.Update()
+        
+        converted_data = converter.GetOutput()
+        
+        points = converted_data.GetPoints()
         if points is None:
             return [], [], {}
 
         vertices = [points.GetPoint(i) for i in range(points.GetNumberOfPoints())]
 
         faces = []
-        for i in range(data.GetNumberOfCells()):
-            cell = data.GetCell(i)
+        for i in range(converted_data.GetNumberOfCells()):
+            cell = converted_data.GetCell(i)
             cell_type = cell.GetCellType()
             if cell_type in [vtk.VTK_TRIANGLE, vtk.VTK_QUAD]:
                 face = [cell.GetPointId(j) for j in range(cell.GetNumberOfPoints())]
@@ -424,18 +432,73 @@ class ImportVTKAnimationOperator(Operator, ImportHelper):
             elif cell_type == vtk.VTK_VERTEX:
                 pass
 
-
         point_data = {}
-        pd = data.GetPointData()
+        pd = converted_data.GetPointData()
         for i in range(pd.GetNumberOfArrays()):
             array = pd.GetArray(i)
-            name = array.GetName()
+            base_name = array.GetName()
             num_components = array.GetNumberOfComponents()
             num_tuples = array.GetNumberOfTuples()
-            if num_components == 1:
-                point_data[name] = [array.GetValue(j) for j in range(num_tuples)]
+            
+            if num_components > 1:
+                if num_components == 3:
+                    magnitudes = []
+                    for j in range(num_tuples):
+                        vector = array.GetTuple3(j)
+                        magnitude = math.sqrt(sum(x*x for x in vector))
+                        magnitudes.append(magnitude)
+                    point_data[f"{base_name}_Magnitude"] = magnitudes
+                    
+                    for comp in range(num_components):
+                        component_values = []
+                        for j in range(num_tuples):
+                            component_values.append(array.GetComponent(j, comp))
+                        suffix = ['X', 'Y', 'Z'][comp]
+                        point_data[f"{base_name}_{suffix}"] = component_values
+                else:
+                    point_data[base_name] = [array.GetTuple(j) for j in range(num_tuples)]
             else:
-                point_data[name] = [array.GetTuple(j) for j in range(num_tuples)]
+                point_data[base_name] = [array.GetValue(j) for j in range(num_tuples)]
+
+        cd = converted_data.GetCellData()
+        for i in range(cd.GetNumberOfArrays()):
+            array = cd.GetArray(i)
+            base_name = array.GetName()
+            num_components = array.GetNumberOfComponents()
+            num_tuples = array.GetNumberOfTuples()
+            
+            if num_components > 1:
+                cell_values_components = []
+                if num_components == 3:
+                    magnitudes = []
+                    for j in range(num_tuples):
+                        vector = array.GetTuple3(j)
+                        magnitude = math.sqrt(sum(x*x for x in vector))
+                        magnitudes.append(magnitude)
+                    cell_values_components.append(('Magnitude', magnitudes))
+                
+                for comp in range(num_components):
+                    component_values = []
+                    for j in range(num_tuples):
+                        component_values.append(array.GetComponent(j, comp))
+                    suffix = ['X', 'Y', 'Z'][comp] if comp < 3 else str(comp)
+                    cell_values_components.append((suffix, component_values))
+                
+                for suffix, cell_values in cell_values_components:
+                    vertex_values = []
+                    for cell_idx, cell_value in enumerate(cell_values):
+                        cell = converted_data.GetCell(cell_idx)
+                        num_points = cell.GetNumberOfPoints()
+                        vertex_values.extend([cell_value] * num_points)
+                    point_data[f"Cell_{base_name}_{suffix}"] = vertex_values
+            else:
+                cell_values = [array.GetValue(j) for j in range(num_tuples)]
+                vertex_values = []
+                for cell_idx, cell_value in enumerate(cell_values):
+                    cell = converted_data.GetCell(cell_idx)
+                    num_points = cell.GetNumberOfPoints()
+                    vertex_values.extend([cell_value] * num_points)
+                point_data[f"Cell_{base_name}"] = vertex_values
 
         return vertices, faces, point_data
 

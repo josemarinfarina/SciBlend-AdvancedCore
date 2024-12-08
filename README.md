@@ -1,4 +1,4 @@
-# SciBlend: Advanced Scientific Visualization for Blender v.2.0.0
+# SciBlend: Advanced Scientific Visualization for Blender v.2.1.0
 
 SciBlend AdvancedCore is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit) within Blender's Python environment.
 
@@ -31,6 +31,12 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
   - 3D Elements: Tetrahedron, Hexahedron, Wedge, Pyramid, Voxel
   - Advanced Elements: Hexagonal Prism, Pentagonal Prism, Polyhedron
   - Linear Elements: Polyline, Poly-Vertex
+
+- **Data Attribute Processing**:
+  - Automatic conversion of cell data to point data
+  - Vector component separation (Magnitude, X, Y, Z)
+  - Independent visualization of each data component
+  - Automatic material generation for each attribute
 
 - **Advanced Animation Support**: Create smooth animations from time-series data with automatic keyframing.
 - **Dynamic Material Management**: Automatically generate and apply materials based on data attributes.
