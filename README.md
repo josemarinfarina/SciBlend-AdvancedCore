@@ -1,11 +1,11 @@
 # SciBlend: Advanced Scientific Visualization for Blender v.2.2.0
 ![](images/NC_RENDER5.png)
 
-SciBlend AdvancedCore is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit)and netCDF4, within Blender's Python environment.
+SciBlend AdvancedCore is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit) and netCDF4, within Blender's Python environment.
 
-SciBlend bridges the gap between scientific data processing and high-quality 3D visualization. By integrating VTK, VTU and PVTU capabilities directly into Blender, SciBlend allows researchers and scientists to create stunning, photorealistic visualizations of complex scientific data.
+SciBlend bridges the gap between scientific data processing and high-quality 3D visualization. By integrating VTK, VTU PVTU and NetCDF capabilities directly into Blender, SciBlend allows researchers and scientists to create stunning, photorealistic visualizations of complex scientific data.
 
-Unlike SciBlend-Core, which primarily focused on importing data from Paraview, this advanced version offers deeper integration with scientific data formats through VTK, VTU and PVTU, allowing for more sophisticated data manipulations and visualizations directly within Blender.
+Unlike SciBlend-Core, which primarily focused on importing data from Paraview, this advanced version offers deeper integration with scientific data formats through VTK, VTU, PVTU and NetCDF allowing for more sophisticated data manipulations and visualizations directly within Blender.
 
 ## Table of Contents
 
@@ -25,6 +25,7 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
   - Import VTK (.vtk) files with legacy format support
   - Full support for XML UnstructuredGrid Format (.vtu)
   - Support for Parallel XML UnstructuredGrid Format (.pvtu)
+  - Support for NetCDF (.nc) and NetCDF4 (.nc4) files
   - Preserves complex scientific data structures and attributes
 
 - **Advanced Cell Type Support**:
@@ -211,7 +212,7 @@ The data will be automatically:
 - Organized into frame collections for time-series data
 - Handled for missing or invalid data
 
-![](images/NC_RENDER3.png)
+![](images/NC_RENDER6.jpg)
 
 ### Importing NetCDF Files
 
