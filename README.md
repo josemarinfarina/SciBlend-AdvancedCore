@@ -1,4 +1,5 @@
 # SciBlend: Advanced Scientific Visualization for Blender v.2.2.0
+![](images/NC_RENDER5.png)
 
 SciBlend AdvancedCore is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit)and netCDF4, within Blender's Python environment.
 
@@ -180,6 +181,7 @@ python3.11 -m pip install netCDF4
 4. Enable the SciBlend addon by checking the box next to it.
 
 ## Usage
+![](images/AORTA_RENDER.png)
 
 ### Importing VTK/VTU/PVTU Files
 
@@ -209,6 +211,7 @@ The data will be automatically:
 - Organized into frame collections for time-series data
 - Handled for missing or invalid data
 
+![](images/NC_RENDER3.png)
 
 ### Importing NetCDF Files
 
@@ -238,6 +241,8 @@ Note: When using spherical projection, latitude/longitude coordinates will be au
 
 Note: The import process may take some time depending on the size 
 and number of files in your sequence.
+
+![](images/NC_RENDER2.png)
 
 ## Advanced Features
 
