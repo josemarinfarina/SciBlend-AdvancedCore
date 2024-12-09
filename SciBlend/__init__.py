@@ -2,7 +2,7 @@ import bpy
 import os
 import bpy.utils.previews
 
-from .operators.import_operators import ImportStaticX3DOperator, ImportX3DAnimationOperator, ImportVTKAnimationOperator
+from .operators.import_operators import ImportStaticX3DOperator, ImportX3DAnimationOperator, ImportVTKAnimationOperator, ImportNetCDFOperator
 from .operators.material_operators import CreateSharedMaterialOperator, ApplySharedMaterialOperator, RemoveAllShadersOperator
 from .operators.object_operators import (
     CreateNullOperator, ParentNullToGeoOperator, NullToOriginOperator, CreateSceneOperator,
@@ -78,6 +78,7 @@ class SciBlendPanel(bpy.types.Panel):
         box.operator("import_x3d.static", text="Import Static X3D", icon='IMPORT')
         box.operator("import_x3d.animation", text="Import X3D Animation", icon='SEQUENCE')
         box.operator("import_vtk.animation", text="Import VTK/VTU/PVTU Animation", icon='SEQUENCE')
+        box.operator("import_netcdf.animation", text="Import NetCDF Animation", icon='SEQUENCE')
 
         # Settings section
         box = layout.box()
@@ -132,12 +133,13 @@ classes = (
     ImportStaticX3DOperator,
     ImportX3DAnimationOperator,
     ImportVTKAnimationOperator,
+    ImportNetCDFOperator,
     CreateSharedMaterialOperator,
     ApplySharedMaterialOperator,
     RemoveAllShadersOperator,
     CreateNullOperator,
     ParentNullToGeoOperator,
-    NullToOriginOperator,  # Asegúrate de que este operador esté incluido aquí
+    NullToOriginOperator,
     CreateSceneOperator,
     X3DImportSettings,
     SciBlendPanel,

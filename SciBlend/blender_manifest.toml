@@ -1,22 +1,26 @@
 schema_version = "1.0.0"
 id = "SciBlend"
-version = "1.0.0"
+version = "2.2.0"
 name = "SciBlend"
 author = "José Marín"
 tagline = "Scientific Solutions for Blender"
 description = """
-v.1.0.0
+v.2.2.0
 
-This addon enhances Blender's capabilities with specialized tools for importing and managing VTK and X3D files and scenes. Key features include:
-Import static and animated VTK and X3D files with customizable settings
-Manage materials across imported objects
-Create and manipulate null objects for scene organization
-Group objects by type (cameras, lights, meshes)
-Quick scene setup with predefined lighting and render settings
-Streamlined UI panel for easy access to all functions
+This addon enhances Blender's capabilities with specialized tools for importing and managing scientific data formats. Key features include:
+
+- Import and visualization of VTK, VTU, PVTU files
+- Import and visualization of NetCDF files with support for:
+  * Time-series data
+  * Spherical projections for global/planetary data
+  * Automatic attribute handling
+- Import and management of X3D files and scenes
+- Group objects by type (cameras, lights, meshes)
+- Quick scene setup with predefined lighting and render settings
+- Streamlined UI panel for easy access to all functions
 """
 blender_version_min = "4.2.0"
 license = ["free licensing"]
-tags = ["Import-Export"]
+tags = ["Import-Export", "Scientific-Visualization"]
 type = "add-on"
 maintainer = "José Marín <marinfarinajose@gmail.com>"
