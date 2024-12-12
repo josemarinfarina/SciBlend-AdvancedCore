@@ -2,13 +2,14 @@ import bpy
 import os
 import bpy.utils.previews
 
-from .operators.import_operators import ImportStaticX3DOperator, ImportX3DAnimationOperator, ImportVTKAnimationOperator, ImportNetCDFOperator
+from .operators.import_operators import ImportStaticX3DOperator, ImportX3DAnimationOperator, ImportVTKAnimationOperator, ImportNetCDFOperator, ImportShapefileOperator
 from .operators.material_operators import CreateSharedMaterialOperator, ApplySharedMaterialOperator, RemoveAllShadersOperator
 from .operators.object_operators import (
     CreateNullOperator, ParentNullToGeoOperator, NullToOriginOperator, CreateSceneOperator,
     BooleanCutterOperator, BooleanCutterHideOperator,
     AddMeshCutterOperator, GroupObjectsOperator, DeleteHierarchyOperator
 )
+from .operators.shapefile_operators import ShapefileDelaunayOperator
 
 preview_collection = None
 
@@ -62,25 +63,24 @@ class X3DImportSettings(bpy.types.PropertyGroup):
     )
 
 class SciBlendPanel(bpy.types.Panel):
-    bl_label = "SciBlend"
+    bl_label = "SciBlend Advanced Core"
     bl_idname = "OBJECT_PT_sciblend"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'SciBlend'
+    bl_category = 'SciBlend Advanced Core'
 
     def draw(self, context):
         layout = self.layout
         settings = context.scene.x3d_import_settings
 
-        # Import section
         box = layout.box()
         box.label(text="Import", icon='IMPORT')
         box.operator("import_x3d.static", text="Import Static X3D", icon='IMPORT')
         box.operator("import_x3d.animation", text="Import X3D Animation", icon='SEQUENCE')
         box.operator("import_vtk.animation", text="Import VTK/VTU/PVTU Animation", icon='SEQUENCE')
         box.operator("import_netcdf.animation", text="Import NetCDF Animation", icon='SEQUENCE')
+        box.operator("import_shapefile.static", text="Import Shapefile", icon='MESH_DATA')
 
-        # Settings section
         box = layout.box()
         box.label(text="Settings", icon='SETTINGS')
         box.prop(settings, "scale_factor")
@@ -89,7 +89,6 @@ class SciBlendPanel(bpy.types.Panel):
         box.prop(settings, "start_frame_number")
         box.prop(settings, "end_frame_number")
 
-        # Material section
         box = layout.box()
         box.label(text="Material", icon='MATERIAL')
         box.prop(settings, "shared_material")
@@ -97,7 +96,6 @@ class SciBlendPanel(bpy.types.Panel):
         box.operator("import_x3d.apply_shared_material", text="Apply Shared Material", icon='CHECKMARK')
         box.operator("import_x3d.remove_all_shaders", text="Remove All Shaders", icon='X')
 
-        # Object operations section
         box = layout.box()
         box.label(text="Object Operations", icon='OBJECT_DATAMODE')
         box.operator("import_x3d.create_null", text="Create Null", icon='EMPTY_AXIS')
@@ -106,12 +104,10 @@ class SciBlendPanel(bpy.types.Panel):
         box.operator("import_x3d.null_to_origin", text="Center Null to Origin", icon='EMPTY_AXIS')
         box.operator("object.group_objects", text="Group Objects", icon='GROUP')
 
-        # Render Presets section
         box = layout.box()
         box.label(text="Render Presets", icon='RENDER_STILL')
         box.operator("object.create_scene", text="Create Scene", icon='SCENE_DATA')
 
-        # Boolean operations section
         box = layout.box()
         box.label(text="Boolean Operations", icon='MOD_BOOLEAN')
         box.prop(context.scene, "new_cutter_mesh", text="New Boolean")
@@ -119,7 +115,6 @@ class SciBlendPanel(bpy.types.Panel):
         box.operator("object.boolean_cutter_operator", text="Apply Boolean", icon='MOD_BOOLEAN')
         box.operator("object.boolean_cutter_hide_operator", text="Hide Boolean", icon='HIDE_ON')
 
-        # Organize geometry section
         box = layout.box()
         box.label(text="Organize Geometry", icon='OUTLINER')
         
@@ -128,6 +123,10 @@ class SciBlendPanel(bpy.types.Panel):
         row.operator("object.group_objects", text="Group Objects", icon='GROUP')
         
         box.operator("object.delete_hierarchy", text="Delete Hierarchy", icon='X')
+
+        box = layout.box()
+        box.label(text="Shapefile Tools", icon='TOOL_SETTINGS')
+        box.operator("object.apply_delaunay", text="Apply Delaunay", icon='MOD_TRIANGULATE')
 
 classes = (
     ImportStaticX3DOperator,
@@ -142,12 +141,14 @@ classes = (
     NullToOriginOperator,
     CreateSceneOperator,
     X3DImportSettings,
+    ImportShapefileOperator,
     SciBlendPanel,
     BooleanCutterOperator,
     BooleanCutterHideOperator,
     AddMeshCutterOperator,
     GroupObjectsOperator,
     DeleteHierarchyOperator,
+    ShapefileDelaunayOperator,
 )
 
 def register():
@@ -200,7 +201,7 @@ bl_info = {
     "author": "Your Name",
     "version": (1, 0),
     "blender": (2, 80, 0),
-    "location": "View3D > Sidebar > SciBlend",
+    "location": "View3D > Sidebar > SciBlend Advanced Core",
     "description": "Scientific visualization tools for Blender",
     "warning": "",
     "doc_url": "",

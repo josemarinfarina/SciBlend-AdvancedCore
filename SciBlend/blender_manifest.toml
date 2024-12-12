@@ -1,11 +1,11 @@
 schema_version = "1.0.0"
 id = "SciBlend"
-version = "2.2.0"
+version = "2.3.0"
 name = "SciBlend"
 author = "José Marín"
 tagline = "Scientific Solutions for Blender"
 description = """
-v.2.2.0
+v.2.3.0
 
 This addon enhances Blender's capabilities with specialized tools for importing and managing scientific data formats. Key features include:
 
@@ -14,6 +14,12 @@ This addon enhances Blender's capabilities with specialized tools for importing 
   * Time-series data
   * Spherical projections for global/planetary data
   * Automatic attribute handling
+- Import and visualization of Shapefiles (.shp) with:
+  * DBF attribute support
+  * Automatic extrusion options
+  * Scale control
+  * Delaunay triangulation for terrain modeling
+  * Advanced point cloud processing
 - Import and management of X3D files and scenes
 - Group objects by type (cameras, lights, meshes)
 - Quick scene setup with predefined lighting and render settings

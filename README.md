@@ -1,11 +1,11 @@
-# SciBlend: Advanced Scientific Visualization for Blender v.2.2.0
+# SciBlend: Advanced Scientific Visualization for Blender v.2.3.0
 ![](images/NC_RENDER5.png)
 
-SciBlend AdvancedCore is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit) and netCDF4, within Blender's Python environment.
+SciBlend Advanced Core v.2.3.0 is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit), netCDF4, and additional geospatial libraries within Blender's Python environment.
 
-SciBlend bridges the gap between scientific data processing and high-quality 3D visualization. By integrating VTK, VTU PVTU and NetCDF capabilities directly into Blender, SciBlend allows researchers and scientists to create stunning, photorealistic visualizations of complex scientific data.
+SciBlend bridges the gap between scientific data processing and high-quality 3D visualization. By integrating VTK, VTU, PVTU, NetCDF, and Shapefile capabilities directly into Blender, SciBlend allows researchers and scientists to create stunning, photorealistic visualizations of complex scientific and geospatial data.
 
-Unlike SciBlend-Core, which primarily focused on importing data from Paraview, this advanced version offers deeper integration with scientific data formats through VTK, VTU, PVTU and NetCDF allowing for more sophisticated data manipulations and visualizations directly within Blender.
+Unlike SciBlend-Core, which primarily focused on importing data from Paraview, this advanced version offers deeper integration with scientific data formats through VTK, VTU, PVTU, NetCDF, and Shapefiles, allowing for more sophisticated data manipulations and visualizations directly within Blender. The addition of advanced geospatial features like Delaunay triangulation and terrain modeling makes it particularly powerful for working with geographic and topographic data.
 
 ## Table of Contents
 
@@ -15,6 +15,9 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
    - [VTK and netCDF4 Installation](#vtk-and-netcdf4-installation)
    - [SciBlend Addon Installation](#sciblend-addon-installation)
 4. [Usage](#usage)
+   - [Importing VTK/VTU/PVTU Files](#importing-vtk/vtu/pvtu-files)
+   - [Importing NetCDF Files](#importing-netcdf-files)
+   - [Working with Shapefiles](#working-with-shapefiles)
 5. [Advanced Features](#advanced-features)
 6. [Contributing](#contributing)
 7. [Support](#support)
@@ -26,6 +29,7 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
   - Full support for XML UnstructuredGrid Format (.vtu)
   - Support for Parallel XML UnstructuredGrid Format (.pvtu)
   - Support for NetCDF (.nc) and NetCDF4 (.nc4) files
+  - Support for Shapefiles (.shp) with advanced processing capabilities
   - Preserves complex scientific data structures and attributes
 
 - **Advanced Cell Type Support**:
@@ -33,12 +37,14 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
   - 3D Elements: Tetrahedron, Hexahedron, Wedge, Pyramid, Voxel
   - Advanced Elements: Hexagonal Prism, Pentagonal Prism, Polyhedron
   - Linear Elements: Polyline, Poly-Vertex
+  - Shapefile Elements: Points, Lines, Polygons with Delaunay triangulation
 
 - **Data Attribute Processing**:
   - Automatic conversion of cell data to point data
   - Vector component separation (Magnitude, X, Y, Z)
   - Independent visualization of each data component
   - Automatic material generation for each attribute
+  - Delaunay triangulation for terrain point clouds
 
 - **Advanced Animation Support**: Create smooth animations from time-series data with automatic keyframing.
 - **Dynamic Material Management**: Automatically generate and apply materials based on data attributes.
@@ -173,6 +179,26 @@ After installing VTK, install netCDF4 using pip in the Blender Python environmen
 python3.11 -m pip install netCDF4
 ```
 
+#### 6. Install required dependencies for shapefile support:
+
+After installing VTK and netCDF4, install the following packages using pip in the Blender Python environment:
+
+##### On Linux/macOS:
+```bash
+./python3.11 -m pip install geopandas
+./python3.11 -m pip install pytz
+./python3.11 -m pip install shapely
+./python3.11 -m pip install fiona
+```
+
+##### On Windows:
+```powershell
+python3.11 -m pip install geopandas
+python3.11 -m pip install pytz
+python3.11 -m pip install shapely
+python3.11 -m pip install fiona
+```
+
 
 ### SciBlend Addon Installation
 
@@ -244,6 +270,34 @@ Note: The import process may take some time depending on the size
 and number of files in your sequence.
 
 ![](images/NC_RENDER2.png)
+
+### Importing NetCDF Files
+
+When working with Shapefile (.shp) data:
+1. Use the "Import Shapefile" option in the SciBlend panel
+2. Select your .shp file
+3. Configure import settings:
+   - Adjust scale factor if needed
+   - Configure axis orientation
+   - Set up material options
+
+For terrain and point cloud data:
+1. Select the imported mesh object(s)
+2. Use the "Apply Delaunay" option to create a triangulated surface
+3. The addon will automatically:
+   - Process and remove duplicate points
+   - Handle z-colinear points
+   - Create a TIN (Triangulated Irregular Network) mesh
+   - Preserve original materials and attributes
+
+The Delaunay triangulation feature supports:
+- Native Blender CDT (Constrained Delaunay Triangulation) when available
+- Custom triangulation algorithm as fallback
+- Automatic handling of duplicate vertices
+- Material transfer from source objects
+
+![](images/RENDER_SPH3.png)
+
 
 ## Advanced Features
 

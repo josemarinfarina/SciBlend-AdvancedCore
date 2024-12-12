@@ -160,3 +160,12 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+
+SciBlend.zip
+.gitignore
+vtk_importer.py
+
+old_core.py
+VIDEO DEMO SCIBLEND.mp4
+VTK_INSTALLATION.md
