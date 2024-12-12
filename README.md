@@ -17,7 +17,7 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
 4. [Usage](#usage)
    - [Importing VTK/VTU/PVTU Files](#importing-vtk/vtu/pvtu-files)
    - [Importing NetCDF Files](#importing-netcdf-files)
-   - [Working with Shapefiles](#working-with-shapefiles)
+   - [Importing Shapefile (.shp) Files](#importing-shapefile-shp-files)
 5. [Advanced Features](#advanced-features)
 6. [Contributing](#contributing)
 7. [Support](#support)
@@ -271,7 +271,7 @@ and number of files in your sequence.
 
 ![](images/NC_RENDER2.png)
 
-### Importing NetCDF Files
+### Importing Shapefile (.shp) Files
 
 When working with Shapefile (.shp) data:
 1. Use the "Import Shapefile" option in the SciBlend panel
