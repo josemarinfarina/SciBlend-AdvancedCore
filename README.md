@@ -1,5 +1,6 @@
 # SciBlend: Advanced Scientific Visualization for Blender v.2.3.0
-![](images/NC_RENDER5.png)
+![](images/banner.png)
+
 
 SciBlend Advanced Core v.2.3.0 is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit), netCDF4, and additional geospatial libraries within Blender's Python environment.
 
