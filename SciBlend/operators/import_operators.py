@@ -616,7 +616,7 @@ class ImportNetCDFOperator(Operator, ImportHelper):
         name="Scale Factor",
         description="Scale factor for imported objects",
         default=1.0,
-        min=0.01,
+        min=0.0001,
         max=100.0
     )
 
