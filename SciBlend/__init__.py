@@ -1,8 +1,25 @@
 import bpy
 import os
-import bpy.utils.previews
 
-from .operators.import_operators import ImportStaticX3DOperator, ImportX3DAnimationOperator, ImportVTKAnimationOperator, ImportNetCDFOperator, ImportShapefileOperator
+try:
+    import bpy.utils.previews
+except ImportError:
+    print("Warning: bpy.utils.previews not available")
+    
+try:
+    from .operators.import_operators import ImportStaticX3DOperator, ImportX3DAnimationOperator, ImportVTKAnimationOperator, ImportNetCDFOperator, ImportShapefileOperator
+    VTK_AVAILABLE = True
+except ImportError as e:
+    import sys
+    print(f"Error importing operators: {e}", file=sys.stderr)
+    VTK_AVAILABLE = False
+    class ImportVTKAnimationOperator(bpy.types.Operator):
+        bl_idname = "import_vtk.animation"
+        bl_label = "Import VTK/VTU/PVTU Animation (VTK not available)"
+        def execute(self, context):
+            self.report({'ERROR'}, "VTK is not available. Please install VTK package.")
+            return {'CANCELLED'}
+
 from .operators.material_operators import CreateSharedMaterialOperator, ApplySharedMaterialOperator, RemoveAllShadersOperator
 from .operators.object_operators import (
     CreateNullOperator, ParentNullToGeoOperator, NullToOriginOperator, CreateSceneOperator,
@@ -10,6 +27,12 @@ from .operators.object_operators import (
     AddMeshCutterOperator, GroupObjectsOperator, DeleteHierarchyOperator
 )
 from .operators.shapefile_operators import ShapefileDelaunayOperator
+from .operators.gob_operators import (
+    GOB_OT_connect_to_paraview, 
+    GOB_OT_disconnect_from_paraview, 
+    GOB_OT_refresh_from_paraview,
+    GOBSettings
+)
 
 preview_collection = None
 
@@ -45,6 +68,11 @@ class X3DImportSettings(bpy.types.PropertyGroup):
         ],
         default='Z',
     )
+    overwrite_scene: bpy.props.BoolProperty(
+        name="Overwrite Scene",
+        description="Delete all objects in the scene before importing new meshes",
+        default=True
+    )
     shared_material: bpy.props.PointerProperty(
         type=bpy.types.Material,
         name="Shared Material"
@@ -77,9 +105,15 @@ class SciBlendPanel(bpy.types.Panel):
         box.label(text="Import", icon='IMPORT')
         box.operator("import_x3d.static", text="Import Static X3D", icon='IMPORT')
         box.operator("import_x3d.animation", text="Import X3D Animation", icon='SEQUENCE')
-        box.operator("import_vtk.animation", text="Import VTK/VTU/PVTU Animation", icon='SEQUENCE')
+        
+        vtk_op = box.operator("import_vtk.animation", text="Import VTK/VTU/PVTU Animation", icon='SEQUENCE')
+        if not VTK_AVAILABLE:
+            vtk_op.enabled = False
+            box.label(text="VTK not available", icon='ERROR')
+            
         box.operator("import_netcdf.animation", text="Import NetCDF Animation", icon='SEQUENCE')
         box.operator("import_shapefile.static", text="Import Shapefile", icon='MESH_DATA')
+        box.prop(settings, "overwrite_scene")
 
         box = layout.box()
         box.label(text="Settings", icon='SETTINGS')
@@ -128,6 +162,20 @@ class SciBlendPanel(bpy.types.Panel):
         box.label(text="Shapefile Tools", icon='TOOL_SETTINGS')
         box.operator("object.apply_delaunay", text="Apply Delaunay", icon='MOD_TRIANGULATE')
 
+        box = layout.box()
+        box.label(text="GoB - Paraview Bridge", icon='LINKED')
+        
+        gob = context.scene.gob_settings
+        box.prop(gob, "host")
+        box.prop(gob, "port")
+        
+        if not gob.is_connected:
+            box.operator("gob.connect_to_paraview", text="Connect to Paraview", icon='LINKED')
+        else:
+            row = box.row(align=True)
+            row.operator("gob.refresh_from_paraview", text="Refresh", icon='FILE_REFRESH')
+            row.operator("gob.disconnect_from_paraview", text="Disconnect", icon='UNLINKED')
+
 classes = (
     ImportStaticX3DOperator,
     ImportX3DAnimationOperator,
@@ -149,16 +197,28 @@ classes = (
     GroupObjectsOperator,
     DeleteHierarchyOperator,
     ShapefileDelaunayOperator,
+    GOBSettings,
+    GOB_OT_connect_to_paraview,
+    GOB_OT_disconnect_from_paraview,
+    GOB_OT_refresh_from_paraview,
 )
 
 def register():
     global preview_collection
-    preview_collection = bpy.utils.previews.new()
-    icons_dir = os.path.join(os.path.dirname(__file__), "icons")
-    preview_collection.load("custom_icon", os.path.join(icons_dir, "logo.png"), 'IMAGE')
+    try:
+        preview_collection = bpy.utils.previews.new()
+        icons_dir = os.path.join(os.path.dirname(__file__), "icons")
+        preview_collection.load("custom_icon", os.path.join(icons_dir, "logo.png"), 'IMAGE')
+    except Exception as e:
+        print(f"Warning: Could not load previews: {e}")
+        preview_collection = None
 
     for cls in classes:
-        bpy.utils.register_class(cls)
+        try:
+            bpy.utils.register_class(cls)
+        except Exception as e:
+            print(f"Error registering {cls.__name__}: {e}")
+            
     bpy.types.Scene.x3d_import_settings = bpy.props.PointerProperty(type=X3DImportSettings)
     bpy.types.Scene.boolean_cutter_object = bpy.props.StringProperty(name="Boolean Cutter Object")
     bpy.types.Scene.new_cutter_mesh = bpy.props.EnumProperty(
@@ -174,17 +234,17 @@ def register():
     bpy.types.Scene.group_type = bpy.props.EnumProperty(
         name="Group Type",
         items=[
-            ('MESHES', "Meshes", "Group all mesh objects"),
-            ('CAMERAS', "Cameras", "Group all camera objects"),
-            ('LIGHTS', "Lights", "Group all light objects"),
-            ('ALL', "All", "Group all objects"),
+            ("EMPTY", "Empty", "Group under an Empty"),
+            ("COLLECTION", "Collection", "Group in a Collection")
         ],
-        default='MESHES'
+        default="EMPTY"
     )
+    bpy.types.Scene.gob_settings = bpy.props.PointerProperty(type=GOBSettings)
 
 def unregister():
     global preview_collection
-    bpy.utils.previews.remove(preview_collection)
+    if preview_collection:
+        bpy.utils.previews.remove(preview_collection)
 
     for cls in classes:
         bpy.utils.unregister_class(cls)
@@ -192,6 +252,7 @@ def unregister():
     del bpy.types.Scene.boolean_cutter_object
     del bpy.types.Scene.new_cutter_mesh
     del bpy.types.Scene.group_type
+    del bpy.types.Scene.gob_settings
 
 if __name__ == "__main__":
     register()

@@ -1,4 +1,3 @@
-# Standard library imports
 import bpy
 import bmesh
 import os
@@ -16,18 +15,41 @@ from bpy.props import (
 )
 from bpy.types import Operator
 
-# Third-party imports
 import numpy as np
-import vtk
 import mathutils
 import geopandas as gpd
 import pytz
-import netCDF4 as nc
+try:
+    import vtk
+    VTK_AVAILABLE = True
+except ImportError:
+    VTK_AVAILABLE = False
+try:
+    import netCDF4 as nc
+    NETCDF_AVAILABLE = True
+except ImportError:
+    NETCDF_AVAILABLE = False
 
-# Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+VTK_VERTEX = 1
+VTK_POLY_VERTEX = 2
+VTK_LINE = 3
+VTK_POLYLINE = 4
+VTK_TRIANGLE = 5
+VTK_TRIANGLE_STRIP = 6
+VTK_POLYGON = 7
+VTK_PIXEL = 8
+VTK_QUAD = 9
+VTK_TETRA = 10
+VTK_VOXEL = 11
+VTK_HEXAHEDRON = 12
+VTK_WEDGE = 13
+VTK_PYRAMID = 14
+VTK_PENTAGONAL_PRISM = 15
+VTK_HEXAGONAL_PRISM = 16
+VTK_POLYHEDRON = 42
 
 class ImportStaticX3DOperator(bpy.types.Operator, ImportHelper):
     """Import a static X3D file into Blender"""
@@ -37,11 +59,18 @@ class ImportStaticX3DOperator(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         settings = context.scene.x3d_import_settings
+        if settings.overwrite_scene:
+            bpy.ops.object.select_all(action="SELECT")
+            bpy.ops.object.delete()
         directory = self.filepath
         file_path = os.path.join(directory, "tmpfile.x3d")
         scale_factor = settings.scale_factor
 
         if os.path.exists(file_path):
+            if settings.overwrite_scene:
+                bpy.ops.object.select_all(action='SELECT')
+                bpy.ops.object.delete()
+                
             bpy.ops.import_scene.x3d(filepath=file_path,
                                      axis_forward=settings.axis_forward,
                                      axis_up=settings.axis_up)
@@ -71,8 +100,9 @@ class ImportX3DAnimationOperator(bpy.types.Operator, ImportHelper):
         x3d_files = [os.path.join(directory, f"tempfile{i}.x3d") for i in range(
             start_frame, end_frame + 1)]
 
-        bpy.ops.object.select_all(action='SELECT')
-        bpy.ops.object.delete()
+        if settings.overwrite_scene:
+            bpy.ops.object.select_all(action='SELECT')
+            bpy.ops.object.delete()
 
         material = settings.shared_material
 
@@ -133,7 +163,6 @@ class ImportX3DAnimationOperator(bpy.types.Operator, ImportHelper):
             else:
                 self.report({'WARNING'}, f"File {x3d_file} not found.")
 
-        # Configurar la interpolación de los keyframes a constante
         for obj in bpy.data.objects:
             if obj.animation_data and obj.animation_data.action:
                 for fcurve in obj.animation_data.action.fcurves:
@@ -159,7 +188,6 @@ class ImportVTKAnimationOperator(Operator, ImportHelper):
 
     directory: StringProperty(subtype='DIR_PATH')
 
-    # Estas propiedades servirán como fallback
     start_frame_number: IntProperty(
         name="Start Frame Number",
         description="Number of the first frame to import",
@@ -218,17 +246,18 @@ class ImportVTKAnimationOperator(Operator, ImportHelper):
 
     height_scale: FloatProperty(
         name="Height Scale",
-        description="Scale factor for height values in spherical projection",
-        default=0.01,
-        min=0.0001,
-        max=1.0,
-        soft_min=0.001,
-        soft_max=0.1
+        description="Scale factor for height (Z dimension)",
+        default=1.0,
+        min=0.01,
+        max=100.0
     )
 
     def execute(self, context):
+        if not VTK_AVAILABLE:
+            self.report({'ERROR'}, "VTK is not available. Please install VTK package.")
+            return {'CANCELLED'}
+            
         try:
-            # Obtener configuraciones de x3d_import_settings
             settings = context.scene.x3d_import_settings
             self.scale_factor = settings.scale_factor
             self.start_frame_number = settings.start_frame_number
@@ -236,18 +265,16 @@ class ImportVTKAnimationOperator(Operator, ImportHelper):
             self.axis_forward = settings.axis_forward
             self.axis_up = settings.axis_up
 
-            # Eliminar todos los objetos existentes
-            bpy.ops.object.select_all(action='SELECT')
-            bpy.ops.object.delete()
+            if settings.overwrite_scene:
+                bpy.ops.object.select_all(action='SELECT')
+                bpy.ops.object.delete()
 
-            # Usar solo los archivos dentro del rango especificado
             files_to_process = self.files[self.start_frame_number-1:self.end_frame_number]
             num_frames = len(files_to_process)
 
             context.scene.frame_start = self.start_frame_number
             context.scene.frame_end = self.start_frame_number + num_frames - 1
 
-            # Crear material compartido
             material = settings.shared_material
             if material is None:
                 material = bpy.data.materials.new(name="SharedMaterial")
@@ -278,7 +305,6 @@ class ImportVTKAnimationOperator(Operator, ImportHelper):
 
                 obj = self.create_mesh(context, vertices, faces, point_data, f"Frame_{frame}")
                 
-                # Crear matriz de transformación
                 from bpy_extras.io_utils import axis_conversion
                 rotation = axis_conversion(
                     from_forward='-Z',
@@ -287,16 +313,12 @@ class ImportVTKAnimationOperator(Operator, ImportHelper):
                     to_up=self.axis_up
                 ).to_4x4()
 
-                # Crear matriz de escala
                 scale = mathutils.Matrix.Scale(self.scale_factor, 4)
                 
-                # Aplicar transformaciones
                 obj.matrix_world = rotation @ scale
 
-                # Actualizar la vista
                 bpy.context.view_layer.update()
 
-                # Configurar visibilidad
                 obj.hide_viewport = False
                 obj.hide_render = False
                 obj.keyframe_insert(data_path="hide_viewport", frame=frame)
@@ -311,7 +333,6 @@ class ImportVTKAnimationOperator(Operator, ImportHelper):
                     obj.keyframe_insert(data_path="hide_viewport", frame=frame+1)
                     obj.keyframe_insert(data_path="hide_render", frame=frame+1)
 
-                # Crear material para cada atributo
                 for attr_name, attr_values in point_data.items():
                     if len(attr_values) == len(vertices):
                         if not isinstance(attr_values[0], (tuple, list)):
@@ -319,7 +340,6 @@ class ImportVTKAnimationOperator(Operator, ImportHelper):
                             max_value = max(attr_values)
                             self.create_material(obj, attr_name, min_value, max_value)
 
-            # Configurar la interpolación de los keyframes a constante
             for obj in bpy.data.objects:
                 if obj.animation_data and obj.animation_data.action:
                     for fcurve in obj.animation_data.action.fcurves:
@@ -334,131 +354,152 @@ class ImportVTKAnimationOperator(Operator, ImportHelper):
             return {'CANCELLED'}
 
     def read_unstructured_grid(self, filepath):
+        if not VTK_AVAILABLE:
+            self.report({'ERROR'}, "VTK is not available. Cannot read file.")
+            return [], [], {}
+            
         extension = os.path.splitext(filepath)[1].lower()
         
         if extension == '.vtk':
-            reader = vtk.vtkUnstructuredGridReader()
-            reader.SetFileName(filepath)
-            reader.Update()
-            data = reader.GetOutput()
-
-            if data is None or data.GetNumberOfPoints() == 0:
-                reader = vtk.vtkPolyDataReader()
+            try:
+                reader = vtk.vtkUnstructuredGridReader()
                 reader.SetFileName(filepath)
                 reader.Update()
                 data = reader.GetOutput()
 
-        elif extension == '.vtu':
-            reader = vtk.vtkXMLUnstructuredGridReader()
-            reader.SetFileName(filepath)
-            reader.Update()
-            data = reader.GetOutput()
-        elif extension == '.pvtu':
-            reader = vtk.vtkXMLPUnstructuredGridReader()
-            reader.SetFileName(filepath)
-            reader.Update()
-            data = reader.GetOutput()
-        else:
-            raise ValueError(f"Unsupported file extension: {extension}")
+                if data is None or data.GetNumberOfPoints() == 0:
+                    reader = vtk.vtkPolyDataReader()
+                    reader.SetFileName(filepath)
+                    reader.Update()
+                    data = reader.GetOutput()
+            except Exception as e:
+                self.report({'ERROR'}, f"Error reading VTK file: {str(e)}")
+                return [], [], {}
 
-        converter = vtk.vtkCellDataToPointData()
-        converter.SetInputData(data)
-        converter.PassCellDataOn()
-        converter.Update()
-        
-        converted_data = converter.GetOutput()
-        
-        points = converted_data.GetPoints()
-        if points is None:
+        elif extension == '.vtu':
+            try:
+                reader = vtk.vtkXMLUnstructuredGridReader()
+                reader.SetFileName(filepath)
+                reader.Update()
+                data = reader.GetOutput()
+            except Exception as e:
+                self.report({'ERROR'}, f"Error reading VTU file: {str(e)}")
+                return [], [], {}
+                
+        elif extension == '.pvtu':
+            try:
+                reader = vtk.vtkXMLPUnstructuredGridReader()
+                reader.SetFileName(filepath)
+                reader.Update()
+                data = reader.GetOutput()
+            except Exception as e:
+                self.report({'ERROR'}, f"Error reading PVTU file: {str(e)}")
+                return [], [], {}
+                
+        else:
+            self.report({'ERROR'}, f"Unsupported file extension: {extension}")
             return [], [], {}
 
-        vertices = [points.GetPoint(i) for i in range(points.GetNumberOfPoints())]
+        try:
+            converter = vtk.vtkCellDataToPointData()
+            converter.SetInputData(data)
+            converter.PassCellDataOn()
+            converter.Update()
+            
+            converted_data = converter.GetOutput()
+            
+            points = converted_data.GetPoints()
+            if points is None:
+                return [], [], {}
 
-        faces = []
-        for i in range(converted_data.GetNumberOfCells()):
-            cell = converted_data.GetCell(i)
-            cell_type = cell.GetCellType()
-            if cell_type in [vtk.VTK_TRIANGLE, vtk.VTK_QUAD]:
-                face = [cell.GetPointId(j) for j in range(cell.GetNumberOfPoints())]
-                faces.append(face)
-            elif cell_type == vtk.VTK_TETRA:
-                for j in range(4):
-                    face = [cell.GetPointId(k) for k in range(4) if k != j]
+            vertices = [points.GetPoint(i) for i in range(points.GetNumberOfPoints())]
+
+            faces = []
+            for i in range(converted_data.GetNumberOfCells()):
+                cell = converted_data.GetCell(i)
+                cell_type = cell.GetCellType()
+                if cell_type in [VTK_TRIANGLE, VTK_QUAD]:
+                    face = [cell.GetPointId(j) for j in range(cell.GetNumberOfPoints())]
                     faces.append(face)
-            elif cell_type == vtk.VTK_HEXAHEDRON:
-                indices = [cell.GetPointId(j) for j in range(cell.GetNumberOfPoints())]
-                faces.append([indices[0], indices[1], indices[2], indices[3]])
-                faces.append([indices[4], indices[5], indices[6], indices[7]])
-                faces.append([indices[0], indices[1], indices[5], indices[4]])
-                faces.append([indices[1], indices[2], indices[6], indices[5]])
-                faces.append([indices[2], indices[3], indices[7], indices[6]])
-                faces.append([indices[3], indices[0], indices[4], indices[7]])
-            elif cell_type == vtk.VTK_WEDGE:
-                indices = [cell.GetPointId(j) for j in range(6)]
-                faces.append([indices[0], indices[1], indices[2]])
-                faces.append([indices[3], indices[4], indices[5]])
-                faces.append([indices[0], indices[1], indices[4], indices[3]])
-                faces.append([indices[1], indices[2], indices[5], indices[4]])
-                faces.append([indices[2], indices[0], indices[3], indices[5]])
-            elif cell_type == vtk.VTK_PYRAMID:
-                indices = [cell.GetPointId(j) for j in range(5)]
-                faces.append([indices[0], indices[1], indices[2], indices[3]])
-                faces.append([indices[0], indices[1], indices[4]])
-                faces.append([indices[1], indices[2], indices[4]])
-                faces.append([indices[2], indices[3], indices[4]])
-                faces.append([indices[3], indices[0], indices[4]])
-            elif cell_type == vtk.VTK_VOXEL:
-                indices = [cell.GetPointId(j) for j in range(8)]
-                faces.append([indices[0], indices[1], indices[3], indices[2]])  
-                faces.append([indices[4], indices[5], indices[7], indices[6]])  
-                faces.append([indices[0], indices[2], indices[6], indices[4]])  
-                faces.append([indices[1], indices[3], indices[7], indices[5]])  
-                faces.append([indices[0], indices[1], indices[5], indices[4]])  
-                faces.append([indices[2], indices[3], indices[7], indices[6]]) 
-            elif cell_type == vtk.VTK_HEXAGONAL_PRISM:
-                indices = [cell.GetPointId(j) for j in range(12)]
-                faces.append([indices[0], indices[1], indices[2], indices[3], indices[4], indices[5]])
-                faces.append([indices[6], indices[7], indices[8], indices[9], indices[10], indices[11]])
-                for i in range(6):
-                    faces.append([indices[i], indices[(i+1)%6], indices[((i+1)%6)+6], indices[i+6]])
-            elif cell_type == vtk.VTK_LINE:
-                indices = [cell.GetPointId(0), cell.GetPointId(1)]
-            elif cell_type == vtk.VTK_PENTAGONAL_PRISM:
-                indices = [cell.GetPointId(j) for j in range(10)]
-                faces.append([indices[0], indices[1], indices[2], indices[3], indices[4]])
-                faces.append([indices[5], indices[6], indices[7], indices[8], indices[9]])
-                for i in range(5):
-                    faces.append([indices[i], indices[(i+1)%5], indices[((i+1)%5)+5], indices[i+5]])
-            elif cell_type == vtk.VTK_PIXEL:
-                indices = [cell.GetPointId(j) for j in range(4)]
-                faces.append([indices[0], indices[1], indices[3], indices[2]])
-            elif cell_type == vtk.VTK_POLYGON:
-                num_points = cell.GetNumberOfPoints()
-                indices = [cell.GetPointId(j) for j in range(num_points)]
-                faces.append(indices)
-            elif cell_type == vtk.VTK_POLYHEDRON:
-                num_faces = cell.GetNumberOfFaces()
-                for i in range(num_faces):
-                    face = cell.GetFace(i)
-                    face_indices = [face.GetPointId(j) for j in range(face.GetNumberOfPoints())]
-                    faces.append(face_indices)
-            elif cell_type == vtk.VTK_POLYLINE:
-                num_points = cell.GetNumberOfPoints()
-                indices = [cell.GetPointId(j) for j in range(num_points)]
-            elif cell_type == vtk.VTK_POLY_VERTEX:
-                pass
-            elif cell_type == vtk.VTK_QUAD:
-                indices = [cell.GetPointId(j) for j in range(4)]
-                faces.append(indices)
-            elif cell_type == vtk.VTK_TRIANGLE_STRIP:
-                num_points = cell.GetNumberOfPoints()
-                for i in range(num_points - 2):
-                    if i % 2 == 0:
-                        faces.append([cell.GetPointId(i), cell.GetPointId(i+1), cell.GetPointId(i+2)])
-                    else:
-                        faces.append([cell.GetPointId(i+1), cell.GetPointId(i), cell.GetPointId(i+2)])
-            elif cell_type == vtk.VTK_VERTEX:
-                pass
+                elif cell_type == VTK_TETRA:
+                    for j in range(4):
+                        face = [cell.GetPointId(k) for k in range(4) if k != j]
+                        faces.append(face)
+                elif cell_type == VTK_HEXAHEDRON:
+                    indices = [cell.GetPointId(j) for j in range(cell.GetNumberOfPoints())]
+                    faces.append([indices[0], indices[1], indices[2], indices[3]])
+                    faces.append([indices[4], indices[5], indices[6], indices[7]])
+                    faces.append([indices[0], indices[1], indices[5], indices[4]])
+                    faces.append([indices[1], indices[2], indices[6], indices[5]])
+                    faces.append([indices[2], indices[3], indices[7], indices[6]])
+                    faces.append([indices[3], indices[0], indices[4], indices[7]])
+                elif cell_type == VTK_WEDGE:
+                    indices = [cell.GetPointId(j) for j in range(6)]
+                    faces.append([indices[0], indices[1], indices[2]])
+                    faces.append([indices[3], indices[4], indices[5]])
+                    faces.append([indices[0], indices[1], indices[4], indices[3]])
+                    faces.append([indices[1], indices[2], indices[5], indices[4]])
+                    faces.append([indices[2], indices[0], indices[3], indices[5]])
+                elif cell_type == VTK_PYRAMID:
+                    indices = [cell.GetPointId(j) for j in range(5)]
+                    faces.append([indices[0], indices[1], indices[2], indices[3]])
+                    faces.append([indices[0], indices[1], indices[4]])
+                    faces.append([indices[1], indices[2], indices[4]])
+                    faces.append([indices[2], indices[3], indices[4]])
+                    faces.append([indices[3], indices[0], indices[4]])
+                elif cell_type == VTK_VOXEL:
+                    indices = [cell.GetPointId(j) for j in range(8)]
+                    faces.append([indices[0], indices[1], indices[3], indices[2]])  
+                    faces.append([indices[4], indices[5], indices[7], indices[6]])  
+                    faces.append([indices[0], indices[2], indices[6], indices[4]])  
+                    faces.append([indices[1], indices[3], indices[7], indices[5]])  
+                    faces.append([indices[0], indices[1], indices[5], indices[4]])  
+                    faces.append([indices[2], indices[3], indices[7], indices[6]]) 
+                elif cell_type == VTK_HEXAGONAL_PRISM:
+                    indices = [cell.GetPointId(j) for j in range(12)]
+                    faces.append([indices[0], indices[1], indices[2], indices[3], indices[4], indices[5]])
+                    faces.append([indices[6], indices[7], indices[8], indices[9], indices[10], indices[11]])
+                    for i in range(6):
+                        faces.append([indices[i], indices[(i+1)%6], indices[((i+1)%6)+6], indices[i+6]])
+                elif cell_type == VTK_POLYLINE:
+                    indices = [cell.GetPointId(0), cell.GetPointId(1)]
+                elif cell_type == VTK_PENTAGONAL_PRISM:
+                    indices = [cell.GetPointId(j) for j in range(10)]
+                    faces.append([indices[0], indices[1], indices[2], indices[3], indices[4]])
+                    faces.append([indices[5], indices[6], indices[7], indices[8], indices[9]])
+                    for i in range(5):
+                        faces.append([indices[i], indices[(i+1)%5], indices[((i+1)%5)+5], indices[i+5]])
+                elif cell_type == VTK_PIXEL:
+                    indices = [cell.GetPointId(j) for j in range(4)]
+                    faces.append([indices[0], indices[1], indices[3], indices[2]])
+                elif cell_type == VTK_POLYGON:
+                    num_points = cell.GetNumberOfPoints()
+                    indices = [cell.GetPointId(j) for j in range(num_points)]
+                    faces.append(indices)
+                elif cell_type == VTK_POLYHEDRON:
+                    num_faces = cell.GetNumberOfFaces()
+                    for i in range(num_faces):
+                        face = cell.GetFace(i)
+                        face_indices = [face.GetPointId(j) for j in range(face.GetNumberOfPoints())]
+                        faces.append(face_indices)
+                elif cell_type == VTK_POLY_VERTEX:
+                    pass
+                elif cell_type == VTK_QUAD:
+                    indices = [cell.GetPointId(j) for j in range(4)]
+                    faces.append(indices)
+                elif cell_type == VTK_TRIANGLE_STRIP:
+                    num_points = cell.GetNumberOfPoints()
+                    for i in range(num_points - 2):
+                        if i % 2 == 0:
+                            faces.append([cell.GetPointId(i), cell.GetPointId(i+1), cell.GetPointId(i+2)])
+                        else:
+                            faces.append([cell.GetPointId(i+1), cell.GetPointId(i), cell.GetPointId(i+2)])
+                elif cell_type == VTK_VERTEX:
+                    pass
+
+        except Exception as e:
+            self.report({'ERROR'}, f"Error processing VTK data: {str(e)}")
+            return [], [], {}
 
         point_data = {}
         pd = converted_data.GetPointData()
@@ -727,6 +768,10 @@ class ImportNetCDFOperator(Operator, ImportHelper):
                 context.scene.frame_start = 1
                 context.scene.frame_end = time_steps
             
+            if context.scene.x3d_import_settings.overwrite_scene:
+                bpy.ops.object.select_all(action='SELECT')
+                bpy.ops.object.delete()
+            
             material = self.create_material(variable_data, self.variable_name)
             
             for frame in range(time_steps):
@@ -940,6 +985,9 @@ class ImportShapefileOperator(Operator, ImportHelper):
 
     def execute(self, context):
         try:
+            if context.scene.x3d_import_settings.overwrite_scene:
+                bpy.ops.object.select_all(action='SELECT')
+                bpy.ops.object.delete()
 
             gdf = gpd.read_file(self.filepath)
             
