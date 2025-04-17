@@ -1,12 +1,19 @@
-# SciBlend: Advanced Scientific Visualization for Blender v.2.3.0
+# SciBlend: Advanced Scientific Visualization for Blender v.3.0.0
 ![](images/banner.png)
 
 
-SciBlend Advanced Core v.2.3.0 is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit), netCDF4, and additional geospatial libraries within Blender's Python environment.
+SciBlend Advanced Core v.3.0.0 is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit), netCDF4, and additional geospatial libraries within Blender's Python environment.
 
 SciBlend bridges the gap between scientific data processing and high-quality 3D visualization. By integrating VTK, VTU, PVTU, NetCDF, and Shapefile capabilities directly into Blender, SciBlend allows researchers and scientists to create stunning, photorealistic visualizations of complex scientific and geospatial data.
 
 Unlike SciBlend-Core, which primarily focused on importing data from Paraview, this advanced version offers deeper integration with scientific data formats through VTK, VTU, PVTU, NetCDF, and Shapefiles, allowing for more sophisticated data manipulations and visualizations directly within Blender. The addition of advanced geospatial features like Delaunay triangulation and terrain modeling makes it particularly powerful for working with geographic and topographic data.
+
+## What's New in Version 3.0.0
+
+- **GoB (GoBlender) & GoP (GoParaview) Bridge**: Directly connect Blender with Paraview for live data visualization and transfer.
+- **Scene Overwrite Control**: New option to control whether imports overwrite existing scene objects or add to the current scene.
+- **Improved VTK Compatibility**: Enhanced compatibility with VTK 9.2.x and 9.3.x.
+- **Robustness Improvements**: Better error handling and compatibility across different operating systems.
 
 ## Table of Contents
 
@@ -19,6 +26,7 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
    - [Importing VTK/VTU/PVTU Files](#importing-vtk/vtu/pvtu-files)
    - [Importing NetCDF Files](#importing-netcdf-files)
    - [Importing Shapefile (.shp) Files](#importing-shapefile-shp-files)
+   - [Using GoB/GoP Paraview Bridge](#using-gob/gop-paraview-bridge)
 5. [Advanced Features](#advanced-features)
 6. [Contributing](#contributing)
 7. [Support](#support)
@@ -47,6 +55,15 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
   - Automatic material generation for each attribute
   - Delaunay triangulation for terrain point clouds
 
+- **Scene Management Options**:
+  - Control whether imports overwrite existing objects or add to the current scene
+  - Organize geometry into hierarchical collections for better scene organization
+
+- **GoB/GoP Paraview Bridge**:
+  - Direct connection between Blender and Paraview
+  - Realtime data transfer and visualization
+  - Compatible with Paraview 5.10+ running the GoP macro
+
 - **Advanced Animation Support**: Create smooth animations from time-series data with automatic keyframing.
 - **Dynamic Material Management**: Automatically generate and apply materials based on data attributes.
 - **Geometry Organization**: Efficiently organize imported geometry into collections for better scene management.
@@ -64,7 +81,7 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
 
 - Python 3.11 (bundled with Blender 4.2+)
 
-- VTK 9.3.0 (installation instructions provided)
+- VTK 9.2.6 or 9.3.0 (installation instructions provided)
 
 - netCDF4 (installation instructions provided)
 
@@ -85,10 +102,10 @@ print(sys.version)
 
 You should see an output like `Python 3.11.x`.
 
-#### 2. Access Blender’s Python Environment:
+#### 2. Access Blender's Python Environment:
 Blender includes its own Python environment, so we need to install VTK within that specific environment.
 
-In your system’s terminal (not Blender's console), navigate to where Blender is installed.
+In your system's terminal (not Blender's console), navigate to where Blender is installed.
 
 ##### On Linux/macOS:
 ```bash
@@ -211,6 +228,7 @@ python3.11 -m pip install fiona
 ## Usage
 ![](images/AORTA_RENDER.png)
 
+
 ### Importing VTK/VTU/PVTU Files
 
 When working with VTK files:
@@ -224,6 +242,7 @@ When working with VTK files:
    - Adjust scale factor if needed
    - Configure axis orientation
    - Set up material options
+   - Choose whether to overwrite the scene or add to it
 
 For animation sequences:
 1. Select all files in your time series (e.g., time_0.vtu, time_1.vtu, time_2.vtu)
@@ -251,6 +270,7 @@ When working with NetCDF files:
    - Set time dimension name (default: "time")
    - Adjust scale factor if needed
    - Configure axis orientation
+   - Choose whether to overwrite the scene or add to it
 
 For global or planetary data visualization:
 1. Enable "Spherical Projection" in the import settings
@@ -281,6 +301,7 @@ When working with Shapefile (.shp) data:
    - Adjust scale factor if needed
    - Configure axis orientation
    - Set up material options
+   - Choose whether to overwrite the scene or add to it
 
 For terrain and point cloud data:
 1. Select the imported mesh object(s)
@@ -299,6 +320,43 @@ The Delaunay triangulation feature supports:
 
 ![](images/RENDER_SPH3.png)
 
+### Using GoB/GoP Paraview Bridge
+
+SciBlend 3.0.0 introduces a new feature: a port between Blender and Paraview called GoB (GoBlender) and GoP (GoParaview).
+
+#### Setting up GoP in Paraview:
+
+1. Use the GoP.py macro file inside the Paraview Macros folder
+2. In Paraview, go to Tools > Manage Plugins/Macros > Macros > Add
+3. Select the GoP macro file
+4. Run the macro in Paraview by selecting the object you want to dinamically export to Blender it and clicking "GoP"
+5. The macro will start a server on port 9998 (default)
+
+#### Connecting from Blender:
+
+1. In Blender, go to the SciBlend panel
+2. Scroll down to the "GoB - Paraview Bridge" section
+3. Configure connection settings:
+   - Host: The IP address of the computer running Paraview (use "localhost" if on the same machine)
+   - Port: The port number (default: 9998)
+4. Click "Connect to Paraview"
+5. Once connected, you'll see "Refresh" and "Disconnect" buttons
+
+#### Using the Connection:
+
+1. In Paraview, make your visualization selections and setup
+2. Any changes in Paraview will be automatically sent to Blender
+3. Use the "Refresh" button in Blender to request the latest data from Paraview
+4. Use the "Disconnect" button when finished
+
+#### Benefits:
+
+- Live connection between the two applications
+- Direct transfer of mesh data with attributes
+- No need to export intermediate files
+- Allows for iterative workflow between Paraview and Blender
+
+Note: For reliable operation, ensure both Blender and Paraview are running on machines with good network connectivity.
 
 ## Advanced Features
 
