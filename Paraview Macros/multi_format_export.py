@@ -68,9 +68,10 @@ Select format for point cloud (default=1):
 2: PLY (.ply) - Stanford Polygon Format
 3: VTK (.vtk) - VTK Legacy Format
 4: VTP (.vtp) - VTK XML PolyData
+5: X3D (.x3d) - Web3D Standard Format
 
 Option: """).strip() or '1'
-    valid_options = {'1': 'csv', '2': 'ply', '3': 'vtk', '4': 'vtp'}
+    valid_options = {'1': 'csv', '2': 'ply', '3': 'vtk', '4': 'vtp', '5': 'x3d'}
 
 elif data_type == "mesh":
     choice = input("""
@@ -79,9 +80,10 @@ Select format for mesh (default=1):
 2: PLY (.ply) - Stanford Polygon Format
 3: STL (.stl) - Stereolithography
 4: VTP (.vtp) - VTK XML PolyData
+5: X3D (.x3d) - Web3D Standard Format
 
 Option: """).strip() or '1'
-    valid_options = {'1': 'vtk', '2': 'ply', '3': 'stl', '4': 'vtp'}
+    valid_options = {'1': 'vtk', '2': 'ply', '3': 'stl', '4': 'vtp', '5': 'x3d'}
 
 elif data_type == "multiblock":
     choice = input("""
@@ -154,6 +156,14 @@ def export_points(data, filepath):
         
         if ext == '.csv':
             return export_to_csv(data, filepath)
+        elif ext == '.x3d':
+            try:
+                view = GetActiveViewOrCreate('RenderView')
+                exporter = ExportView(filepath, view=view, ExportColorLegends=1)
+                return os.path.exists(filepath)
+            except Exception as e:
+                print(f"Error with X3D export: {str(e)}")
+                return False
         else:
             SaveData(filepath, proxy=active_source)
             success = os.path.exists(filepath)
