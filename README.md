@@ -1,8 +1,9 @@
-# SciBlend: Advanced Scientific Visualization for Blender v.3.0.0
-![](images/banner.png)
+# SciBlend: Advanced Scientific Visualization for Blender v.3.1.0
 
+![SciBlend Banner](images/banner.png)
+*A sequence of heart models from simulation data, including electrical activation and mechanical contraction, rendered in Blender's Cycles engine using the SciBlend toolkit. The colour scale and legend indicate displacement magnitude. SciBlend Advanced Core supports import into Blender various computational file formats (e.g., VTK, netCDF, SHP) for both static and animated data and visualization in real-time*
 
-SciBlend Advanced Core v.3.0.0 is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit), netCDF4, and additional geospatial libraries within Blender's Python environment.
+SciBlend Advanced Core v.3.1.0 is a powerful add-on for Blender 4.2+ that represents a significant evolution from its predecessor, [SciBlend-Core](https://github.com/josemarinfarina/SciBlend-Core). This advanced version is characterized by its requirement for a more complex setup process, primarily due to the need to install VTK (Visualization Toolkit), netCDF4, and additional geospatial libraries within Blender's Python environment.
 
 SciBlend bridges the gap between scientific data processing and high-quality 3D visualization. By integrating VTK, VTU, PVTU, NetCDF, and Shapefile capabilities directly into Blender, SciBlend allows researchers and scientists to create stunning, photorealistic visualizations of complex scientific and geospatial data.
 
@@ -10,10 +11,21 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
 
 ## What's New in Version 3.0.0
 
-- **GoB (GoBlender) & GoP (GoParaview) Bridge**: Directly connect Blender with Paraview for live data visualization and transfer.
+
+- **New Export Options**: 
+  - **Universal Export Macro**: The new `export_macro.py` is a comprehensive solution for exporting data from Paraview in multiple formats:
+    * Supports a wide range of formats (CSV, PLY, VTK, VTP, X3D, STL, VTM, CGNS)
+    * Intelligently detects and optimizes export based on data type
+    * Handles both static and time-series data
+    * Provides fallback options for better export reliability
+  - **GoB/GoP Bridge**: Specialized tool for real-time VTK data transfer between Paraview and Blender
+    * Focused on live visualization and interactive workflows
+    * Optimized for VTK format specifically
+    * Ideal for iterative visualization adjustments
 - **Scene Overwrite Control**: New option to control whether imports overwrite existing scene objects or add to the current scene.
 - **Improved VTK Compatibility**: Enhanced compatibility with VTK 9.2.x and 9.3.x.
 - **Robustness Improvements**: Better error handling and compatibility across different operating systems.
+
 
 ## Table of Contents
 
@@ -22,11 +34,15 @@ Unlike SciBlend-Core, which primarily focused on importing data from Paraview, t
 3. [Installation](#installation)
    - [VTK and netCDF4 Installation](#vtk-and-netcdf4-installation)
    - [SciBlend Addon Installation](#sciblend-addon-installation)
+   - [Paraview Addons Installation](#paraview-addons-installation)
 4. [Usage](#usage)
-   - [Importing VTK/VTU/PVTU Files](#importing-vtk/vtu/pvtu-files)
-   - [Importing NetCDF Files](#importing-netcdf-files)
-   - [Importing Shapefile (.shp) Files](#importing-shapefile-shp-files)
-   - [Using GoB/GoP Paraview Bridge](#using-gob/gop-paraview-bridge)
+   - [Exporting from Paraview](#exporting-from-paraview)
+     * [Using GoB/GoP Bridge](#using-gob/gop-bridge)
+     * [Using the Export Macro](#using-the-export-macro)
+   - [Importing in Blender](#importing-in-blender)
+     * [VTK/VTU/PVTU Files](#importing-vtk/vtu/pvtu-files)
+     * [NetCDF Files](#importing-netcdf-files)
+     * [Shapefile (.shp) Files](#importing-shapefile-shp-files)
 5. [Advanced Features](#advanced-features)
 6. [Contributing](#contributing)
 7. [Support](#support)
@@ -119,7 +135,7 @@ cd C:\path_to_blender\blender-4.2.1-windows64\4.2\python\bin
 
 #### 3. Install VTK:
 
-Once in the correct directory, you can install VTK using `pip`. Ensure that you’re installing a compatible version of VTK for Python 3.11.
+Once in the correct directory, you can install VTK using `pip`. Ensure that you're installing a compatible version of VTK for Python 3.11.
 
 ##### Run the following command to install VTK:
 
@@ -225,11 +241,98 @@ python3.11 -m pip install fiona
 3. Click "Install" and select the downloaded zip file.
 4. Enable the SciBlend addon by checking the box next to it.
 
+### Paraview Addons Installation
+
+#### Installing GoP (GoParaview)
+1. Locate the `GoP.py` macro file in the Paraview Macros folder of your SciBlend installation
+2. In Paraview, go to Tools > Manage Plugins/Macros > Macros > Add
+3. Select the GoP macro file
+4. The macro will be available in the Macros menu
+
+#### Installing Export Macro
+1. Locate the `export_macro.py` file in the Paraview Macros folder
+2. In Paraview, go to Tools > Manage Plugins/Macros > Macros > Add
+3. Select the `export_macro.py` file
+4. The macro will appear as "PARAVIEW MULTI-FORMAT EXPORTER" in the Macros menu
+
 ## Usage
-![](images/AORTA_RENDER.png)
 
+![Aorta Visualization](images/AORTA_RENDER.png)
+*Illustrative frame from the Aorta Dataset. A semitransparent render of the aorta wall containing flow streamlines and velocity glyphs. Shader is encoded by velocity magnitude [m/s] using a black–blue–white colourmap. Visualizations were rendered with Cycles Render and imported using SciBlend Advanced Core*
 
-### Importing VTK/VTU/PVTU Files
+### Exporting from Paraview
+
+#### Using GoB/GoP Bridge
+
+SciBlend Advanced Core 3.1.0 introduces a new feature: a port between Blender and Paraview called GoB (GoBlender) and GoP (GoParaview), inspired by GoZ (Zbrush).
+
+##### Using GoP in Paraview:
+1. Select the object you want to dynamically export to Blender
+2. Click "GoP" in the Macros menu
+3. The macro will start a server on port 9998 (default)
+
+##### Connecting from Blender:
+1. In Blender, go to the SciBlend panel
+2. Scroll down to the "GoB - Paraview Bridge" section
+3. Configure connection settings:
+   - Host: The IP address of the computer running Paraview (use "localhost" if on the same machine)
+   - Port: The port number (default: 9998)
+4. Click "Connect to Paraview"
+5. Once connected, you'll see "Refresh" and "Disconnect" buttons
+
+##### Using the Connection:
+1. In Paraview, make your visualization selections and setup
+2. Any changes in Paraview will be automatically sent to Blender
+3. Use the "Refresh" button in Blender to request the latest data from Paraview
+4. Use the "Disconnect" button when finished
+
+##### Benefits:
+- Live connection between the two applications
+- Direct transfer of mesh data with attributes
+- No need to export intermediate files
+- Allows for iterative workflow between Paraview and Blender
+
+Note: For reliable operation, ensure both Blender and Paraview are running on machines with good network connectivity.
+
+#### Using the Export Macro
+
+The `export_macro.py` provides a more comprehensive solution for exporting data from Paraview in various formats, ideal for when you need specific file formats or want to preserve your data for later use.
+
+1. Load the macro in Paraview:
+   - Go to Tools > Manage Macros
+   - Click "Add" and select `export_macro.py` from the Paraview Macros folder
+   - The macro will appear as "PARAVIEW MULTI-FORMAT EXPORTER"
+
+2. Using the exporter:
+   - Select the object you want to export in the Pipeline Browser
+   - Run the macro
+   - The macro will automatically detect your data type and offer appropriate format options:
+     * For point clouds: CSV, PLY, VTK, VTP, X3D
+     * For meshes: VTK, PLY, STL, VTP, X3D
+     * For multiblock data: VTM, CGNS
+   - Choose your preferred format
+   - Specify the save location
+   - For animations, you can select specific frame ranges to export
+
+3. Advanced Features:
+   - Automatic data type detection optimizes the export process
+   - Format-specific optimizations ensure best quality exports
+   - Automatic fallback to VTK format if the primary format fails
+   - Detailed progress tracking and user feedback
+   - Support for both single frames and time-series data
+   - Handles missing data and provides error recovery
+
+4. Best Practices:
+   - Use CSV for simple point cloud data when you need human-readable format
+   - Choose PLY or VTP for point clouds with additional attributes
+   - Use STL for simple mesh exports, especially for 3D printing
+   - Select VTK/VTP for preserving all data attributes
+   - Use VTM for complex multiblock datasets
+   - Enable the fallback option for critical exports
+
+### Importing in Blender
+
+#### Importing VTK/VTU/PVTU Files
 
 When working with VTK files:
 1. Use the "Import VTK Animation" option in the SciBlend panel
@@ -258,9 +361,10 @@ The data will be automatically:
 - Organized into frame collections for time-series data
 - Handled for missing or invalid data
 
-![](images/NC_RENDER6.jpg)
+![Global Temperature Visualization](images/NC_RENDER6.jpg)
+*Climate data from Copernicus Dataset imported from NetCDF format via SciBlend Advanced Core with the Spherical Projection feature and rendered with Cycles.*
 
-### Importing NetCDF Files
+#### Importing NetCDF Files
 
 When working with NetCDF files:
 1. Use the "Import NetCDF Animation" option in the SciBlend panel
@@ -290,9 +394,7 @@ Note: When using spherical projection, latitude/longitude coordinates will be au
 Note: The import process may take some time depending on the size 
 and number of files in your sequence.
 
-![](images/NC_RENDER2.png)
-
-### Importing Shapefile (.shp) Files
+#### Importing Shapefile (.shp) Files
 
 When working with Shapefile (.shp) data:
 1. Use the "Import Shapefile" option in the SciBlend panel
@@ -318,45 +420,8 @@ The Delaunay triangulation feature supports:
 - Automatic handling of duplicate vertices
 - Material transfer from source objects
 
-![](images/RENDER_SPH3.png)
-
-### Using GoB/GoP Paraview Bridge
-
-SciBlend 3.0.0 introduces a new feature: a port between Blender and Paraview called GoB (GoBlender) and GoP (GoParaview).
-
-#### Setting up GoP in Paraview:
-
-1. Use the GoP.py macro file inside the Paraview Macros folder
-2. In Paraview, go to Tools > Manage Plugins/Macros > Macros > Add
-3. Select the GoP macro file
-4. Run the macro in Paraview by selecting the object you want to dinamically export to Blender it and clicking "GoP"
-5. The macro will start a server on port 9998 (default)
-
-#### Connecting from Blender:
-
-1. In Blender, go to the SciBlend panel
-2. Scroll down to the "GoB - Paraview Bridge" section
-3. Configure connection settings:
-   - Host: The IP address of the computer running Paraview (use "localhost" if on the same machine)
-   - Port: The port number (default: 9998)
-4. Click "Connect to Paraview"
-5. Once connected, you'll see "Refresh" and "Disconnect" buttons
-
-#### Using the Connection:
-
-1. In Paraview, make your visualization selections and setup
-2. Any changes in Paraview will be automatically sent to Blender
-3. Use the "Refresh" button in Blender to request the latest data from Paraview
-4. Use the "Disconnect" button when finished
-
-#### Benefits:
-
-- Live connection between the two applications
-- Direct transfer of mesh data with attributes
-- No need to export intermediate files
-- Allows for iterative workflow between Paraview and Blender
-
-Note: For reliable operation, ensure both Blender and Paraview are running on machines with good network connectivity.
+![Terrain Visualization](images/shapefile_figure_blackBG.png)
+*Three-dimensional rendering of topographic data from a Shapefile file. Colour intensity on the contour lines corresponds to elevation magnitude [m], mapped via a black-blue-white colourmap. The underlying spatial connectivity is represented by a Delaunay triangulation of the vertices achieved with SciBlend Advanced Core module, shown in black lines.*
 
 ## Advanced Features
 
@@ -371,3 +436,4 @@ Contributions are welcome! Feel free to open issues or submit pull requests to i
 ## Support
 
 For questions, issues, or feature requests, please use the GitHub issue tracker or contact the maintainer at info@sciblend.com.
+
