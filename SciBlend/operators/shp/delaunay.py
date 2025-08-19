@@ -1,6 +1,6 @@
 import bpy
 import time
-from .utils.delaunay_voronoi import computeDelaunayTriangulation
+from ..utils.delaunay_voronoi import computeDelaunayTriangulation
 
 try:
     from mathutils.geometry import delaunay_2d_cdt
@@ -13,29 +13,36 @@ import logging
 log = logging.getLogger(__name__)
 
 class Point:
+    """Lightweight 3D point used by the Python Delaunay fallback."""
     def __init__(self, x, y, z):
         self.x, self.y, self.z = x, y, z
 
-def unique(L):
+def unique(values):
+    """Remove duplicated XY entries in-place preserving the last Z.
+
+    Returns a tuple (num_duplicates, num_z_colinear).
+    """
     nDupli = 0
     nZcolinear = 0
-    L.sort()
-    last = L[-1]
-    for i in range(len(L)-2, -1, -1):
-        if last[:2] == L[i][:2]:
-            if last[2] == L[i][2]:
+    values.sort()
+    last = values[-1]
+    for i in range(len(values) - 2, -1, -1):
+        if last[:2] == values[i][:2]:
+            if last[2] == values[i][2]:
                 nDupli += 1
             else:
                 nZcolinear += 1
-            del L[i]
+            del values[i]
         else:
-            last = L[i]
+            last = values[i]
     return (nDupli, nZcolinear)
 
 def checkEqual(lst):
+    """Return True if all elements in the list are equal."""
     return lst[1:] == lst[:-1]
 
 class ShapefileDelaunayOperator(bpy.types.Operator):
+    """Apply Delaunay triangulation to selected mesh objects (2.5D)."""
     bl_idname = "object.apply_delaunay"
     bl_label = "Apply Delaunay Triangulation"
     bl_description = "Terrain points cloud Delaunay triangulation in 2.5D"
@@ -46,6 +53,7 @@ class ShapefileDelaunayOperator(bpy.types.Operator):
         return context.selected_objects and all(obj.type == 'MESH' for obj in context.selected_objects)
 
     def execute(self, context):
+        """Triangulate all selected mesh vertices in XY, preserving Z as height."""
         w = context.window
         w.cursor_set('WAIT')
 
@@ -66,13 +74,8 @@ class ShapefileDelaunayOperator(bpy.types.Operator):
 
                 matrix_world = obj.matrix_world
                 verts = [matrix_world @ v.co for v in mesh.vertices]
-                
                 all_verts.extend([(v.x, v.y, v.z) for v in verts])
-                original_data.append({
-                    'object': obj,
-                    'vertex_count': len(verts),
-                    'offset': vertex_offset
-                })
+                original_data.append({'object': obj, 'vertex_count': len(verts), 'offset': vertex_offset})
                 vertex_offset += len(verts)
 
             if len(all_verts) < 3:
@@ -98,19 +101,21 @@ class ShapefileDelaunayOperator(bpy.types.Operator):
 
             tin_obj = bpy.data.objects.new("TIN", tin_mesh)
             context.scene.collection.objects.link(tin_obj)
-            
+
             for mat in selected_objects[0].data.materials:
                 tin_mesh.materials.append(mat)
-            
+
             context.view_layer.objects.active = tin_obj
             tin_obj.select_set(True)
             for obj in selected_objects:
                 obj.select_set(False)
 
         except Exception as e:
-            self.report({'ERROR'}, f"Error en triangulación: {str(e)}")
+            self.report({'ERROR'}, f"Error in triangulation: {str(e)}")
             return {'CANCELLED'}
         finally:
             w.cursor_set('DEFAULT')
-            
+
         return {'FINISHED'}
+
+__all__ = ["ShapefileDelaunayOperator"] 

@@ -125,6 +125,10 @@ class GroupObjectsOperator(bpy.types.Operator):
         elif group_type == 'ALL':
             objects_to_group = list(bpy.data.objects)
             collection_name = "All Objects"
+        else:
+            # Fallback to all objects if group_type is not one of the expected values
+            objects_to_group = list(bpy.data.objects)
+            collection_name = "All Objects"
 
         new_collection = bpy.data.collections.new(collection_name)
         bpy.context.scene.collection.children.link(new_collection)
@@ -162,19 +166,18 @@ class BooleanCutterOperator(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        cutter_name = context.scene.boolean_cutter_object
-        cutter = bpy.data.objects.get(cutter_name)
-        if not cutter:
-            self.report({'ERROR'}, f"Object named {cutter_name} not found")
+        cutter_obj = context.scene.boolean_cutter_object
+        if cutter_obj is None:
+            self.report({'ERROR'}, "No cutter object selected")
             return {'CANCELLED'}
 
         for obj in bpy.context.scene.objects:
-            if obj.type == 'MESH' and obj != cutter:
+            if obj.type == 'MESH' and obj != cutter_obj:
                 bool_mod = obj.modifiers.get("Boolean")
                 if not bool_mod:
                     bool_mod = obj.modifiers.new(name="Boolean", type='BOOLEAN')
                 bool_mod.operation = 'DIFFERENCE'
-                bool_mod.object = cutter
+                bool_mod.object = cutter_obj
 
         return {'FINISHED'}
 
@@ -183,18 +186,13 @@ class BooleanCutterHideOperator(bpy.types.Operator):
     bl_label = "Hide Boolean Cutter"
 
     def execute(self, context):
-        cutter_name = context.scene.boolean_cutter_object
-        if not cutter_name:
+        cutter_obj = context.scene.boolean_cutter_object
+        if cutter_obj is None:
             self.report({'ERROR'}, "No cutter object selected.")
             return {'CANCELLED'}
 
-        cutter = bpy.data.objects.get(cutter_name)
-        if not cutter:
-            self.report({'ERROR'}, f"Cutter object '{cutter_name}' not found.")
-            return {'CANCELLED'}
-
-        cutter.hide_viewport = True
-        cutter.hide_render = True
+        cutter_obj.hide_viewport = True
+        cutter_obj.hide_render = True
 
         self.report({'INFO'}, "Boolean cutter hidden.")
         return {'FINISHED'}
@@ -229,7 +227,7 @@ class AddMeshCutterOperator(bpy.types.Operator):
             bpy.ops.mesh.primitive_torus_add()
 
         cutter = context.active_object
-        context.scene.boolean_cutter_object = cutter.name
+        context.scene.boolean_cutter_object = cutter
 
         return {'FINISHED'}
 
@@ -252,7 +250,6 @@ class OrganizeGeometryInCollectionsOperator(bpy.types.Operator):
                 new_collection = bpy.data.collections[collection_name]
             collections.append(new_collection)
             
-            # Crear un objeto Empty para controlar la visibilidad
             empty_name = f"Visibility_Control_{i}"
             if empty_name not in bpy.data.objects:
                 empty = bpy.data.objects.new(empty_name, None)

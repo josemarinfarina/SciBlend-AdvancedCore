@@ -6,18 +6,42 @@ try:
 except ImportError:
     print("Warning: bpy.utils.previews not available")
     
+from .operators.x3d.operators import ImportX3DOperator
+
 try:
-    from .operators.import_operators import ImportStaticX3DOperator, ImportX3DAnimationOperator, ImportVTKAnimationOperator, ImportNetCDFOperator, ImportShapefileOperator
-    VTK_AVAILABLE = True
+    from .operators.vtk.operators import ImportVTKAnimationOperator
 except ImportError as e:
     import sys
-    print(f"Error importing operators: {e}", file=sys.stderr)
-    VTK_AVAILABLE = False
+    print(f"Error importing VTK operator: {e}", file=sys.stderr)
     class ImportVTKAnimationOperator(bpy.types.Operator):
         bl_idname = "import_vtk.animation"
         bl_label = "Import VTK/VTU/PVTU Animation (VTK not available)"
         def execute(self, context):
             self.report({'ERROR'}, "VTK is not available. Please install VTK package.")
+            return {'CANCELLED'}
+
+try:
+    from .operators.netcdf.operators import ImportNetCDFOperator
+except ImportError as e:
+    import sys
+    print(f"Error importing NetCDF operator: {e}", file=sys.stderr)
+    class ImportNetCDFOperator(bpy.types.Operator):
+        bl_idname = "import_netcdf.animation"
+        bl_label = "Import NetCDF Animation (netCDF4 not available)"
+        def execute(self, context):
+            self.report({'ERROR'}, "netCDF4 is not available. Please install required package.")
+            return {'CANCELLED'}
+
+try:
+    from .operators.shp.operators import ImportShapefileOperator
+except ImportError as e:
+    import sys
+    print(f"Error importing Shapefile operator: {e}", file=sys.stderr)
+    class ImportShapefileOperator(bpy.types.Operator):
+        bl_idname = "import_shapefile.static"
+        bl_label = "Import Shapefile (dependencies not available)"
+        def execute(self, context):
+            self.report({'ERROR'}, "Shapefile dependencies not available. Please install required packages.")
             return {'CANCELLED'}
 
 from .operators.material_operators import CreateSharedMaterialOperator, ApplySharedMaterialOperator, RemoveAllShadersOperator
@@ -26,7 +50,7 @@ from .operators.object_operators import (
     BooleanCutterOperator, BooleanCutterHideOperator,
     AddMeshCutterOperator, GroupObjectsOperator, DeleteHierarchyOperator
 )
-from .operators.shapefile_operators import ShapefileDelaunayOperator
+from .operators.shp.delaunay import ShapefileDelaunayOperator
 from .operators.gob_operators import (
     GOB_OT_connect_to_paraview, 
     GOB_OT_disconnect_from_paraview, 
@@ -38,7 +62,7 @@ preview_collection = None
 
 class X3DImportSettings(bpy.types.PropertyGroup):
     scale_factor: bpy.props.FloatProperty(
-        name="Scale Factor",
+        name="Scale",
         description="Scale factor for imported objects",
         default=1.0,
         min=0.0001,
@@ -47,24 +71,24 @@ class X3DImportSettings(bpy.types.PropertyGroup):
     axis_forward: bpy.props.EnumProperty(
         name="Forward",
         items=[
-            ('X', "X Forward", ""),
-            ('Y', "Y Forward", ""),
-            ('Z', "Z Forward", ""),
-            ('-X', "-X Forward", ""),
-            ('-Y', "-Y Forward", ""),
-            ('-Z', "-Z Forward", ""),
+            ('X', "X", ""),
+            ('Y', "Y", ""),
+            ('Z', "Z", ""),
+            ('-X', "-X", ""),
+            ('-Y', "-Y", ""),
+            ('-Z', "-Z", ""),
         ],
         default='Y',
     )
     axis_up: bpy.props.EnumProperty(
         name="Up",
         items=[
-            ('X', "X Up", ""),
-            ('Y', "Y Up", ""),
-            ('Z', "Z Up", ""),
-            ('-X', "-X Up", ""),
-            ('-Y', "-Y Up", ""),
-            ('-Z', "-Z Up", ""),
+            ('X', "X", ""),
+            ('Y', "Y", ""),
+            ('Z', "Z", ""),
+            ('-X', "-X", ""),
+            ('-Y', "-Y", ""),
+            ('-Z', "-Z", ""),
         ],
         default='Z',
     )
@@ -76,18 +100,6 @@ class X3DImportSettings(bpy.types.PropertyGroup):
     shared_material: bpy.props.PointerProperty(
         type=bpy.types.Material,
         name="Shared Material"
-    )
-    start_frame_number: bpy.props.IntProperty(
-        name="Start Frame",
-        description="Start frame for animation import",
-        default=1,
-        min=1
-    )
-    end_frame_number: bpy.props.IntProperty(
-        name="End Frame",
-        description="End frame for animation import",
-        default=100,
-        min=1
     )
 
 class SciBlendPanel(bpy.types.Panel):
@@ -103,84 +115,74 @@ class SciBlendPanel(bpy.types.Panel):
 
         box = layout.box()
         box.label(text="Import", icon='IMPORT')
-        box.operator("import_x3d.static", text="Import Static X3D", icon='IMPORT')
-        box.operator("import_x3d.animation", text="Import X3D Animation", icon='SEQUENCE')
-        
-        vtk_op = box.operator("import_vtk.animation", text="Import VTK/VTU/PVTU Animation", icon='SEQUENCE')
-        if not VTK_AVAILABLE:
-            vtk_op.enabled = False
-            box.label(text="VTK not available", icon='ERROR')
-            
-        box.operator("import_netcdf.animation", text="Import NetCDF Animation", icon='SEQUENCE')
-        box.operator("import_shapefile.static", text="Import Shapefile", icon='MESH_DATA')
-        box.prop(settings, "overwrite_scene")
+        row = box.row(align=True)
+        row.operator("import_x3d.animation", text="X3D", icon='SEQUENCE')
+        row.operator("import_vtk.animation", text="VTK/VTU/PVTU", icon='SEQUENCE')
+        row.operator("import_netcdf.animation", text="NetCDF", icon='SEQUENCE')
+        row.operator("import_shapefile.static", text="Shapefile", icon='MESH_DATA')
+        row = box.row(align=True)
+        row.prop(settings, "overwrite_scene")
 
         box = layout.box()
         box.label(text="Settings", icon='SETTINGS')
-        box.prop(settings, "scale_factor")
-        box.prop(settings, "axis_forward")
-        box.prop(settings, "axis_up")
-        box.prop(settings, "start_frame_number")
-        box.prop(settings, "end_frame_number")
+        row = box.row(align=True)
+        row.prop(settings, "scale_factor")
+        row.prop(settings, "axis_forward")
+        row.prop(settings, "axis_up")
 
         box = layout.box()
         box.label(text="Material", icon='MATERIAL')
-        box.prop(settings, "shared_material")
-        box.operator("import_x3d.create_shared_material", text="New Global Material", icon='ADD')
-        box.operator("import_x3d.apply_shared_material", text="Apply Shared Material", icon='CHECKMARK')
-        box.operator("import_x3d.remove_all_shaders", text="Remove All Shaders", icon='X')
+        row = box.row(align=True)
+        row.prop(settings, "shared_material", text="")
+        row.operator("import_x3d.create_shared_material", text="New", icon='ADD')
+        row.operator("import_x3d.apply_shared_material", text="Apply", icon='CHECKMARK')
+        row.operator("import_x3d.remove_all_shaders", text="Clear", icon='X')
 
         box = layout.box()
-        box.label(text="Object Operations", icon='OBJECT_DATAMODE')
-        box.operator("import_x3d.create_null", text="Create Null", icon='EMPTY_AXIS')
-        box.operator("import_x3d.parent_null_to_geo", text="Parent Null to Geo", icon='OBJECT_DATAMODE')
-        box.operator("import_x3d.null_to_origin", text="Null to Origin", icon='EMPTY_AXIS')
-        box.operator("import_x3d.null_to_origin", text="Center Null to Origin", icon='EMPTY_AXIS')
-        box.operator("object.group_objects", text="Group Objects", icon='GROUP')
+        box.label(text="Objects", icon='OBJECT_DATAMODE')
+        row = box.row(align=True)
+        row.operator("import_x3d.create_null", text="Create Null", icon='EMPTY_AXIS')
+        row.operator("import_x3d.parent_null_to_geo", text="Parent to Geo", icon='OBJECT_DATAMODE')
+        row.operator("import_x3d.null_to_origin", text="Center Null", icon='EMPTY_AXIS')
+        row.operator("object.group_objects", text="Group", icon='GROUP')
+
+        row = box.row(align=True)
+        row.operator("object.create_scene", text="Scene Preset", icon='SCENE_DATA')
 
         box = layout.box()
-        box.label(text="Render Presets", icon='RENDER_STILL')
-        box.operator("object.create_scene", text="Create Scene", icon='SCENE_DATA')
+        box.label(text="Boolean", icon='MOD_BOOLEAN')
+        row = box.row(align=True)
+        row.prop(context.scene, "new_cutter_mesh", text="")
+        row.operator("object.add_mesh_cutter_operator", text="Add Cutter", icon='ADD')
+        row = box.row(align=True)
+        row.operator("object.boolean_cutter_operator", text="Apply", icon='MOD_BOOLEAN')
+        row.operator("object.boolean_cutter_hide_operator", text="Hide", icon='HIDE_ON')
 
         box = layout.box()
-        box.label(text="Boolean Operations", icon='MOD_BOOLEAN')
-        box.prop(context.scene, "new_cutter_mesh", text="New Boolean")
-        box.operator("object.add_mesh_cutter_operator", text="Add Boolean", icon='ADD')
-        box.operator("object.boolean_cutter_operator", text="Apply Boolean", icon='MOD_BOOLEAN')
-        box.operator("object.boolean_cutter_hide_operator", text="Hide Boolean", icon='HIDE_ON')
-
-        box = layout.box()
-        box.label(text="Organize Geometry", icon='OUTLINER')
-        
-        row = box.row()
+        box.label(text="Organize", icon='OUTLINER')
+        row = box.row(align=True)
         row.prop(context.scene, "group_type", text="")
-        row.operator("object.group_objects", text="Group Objects", icon='GROUP')
-        
-        box.operator("object.delete_hierarchy", text="Delete Hierarchy", icon='X')
-
-        box = layout.box()
-        box.label(text="Shapefile Tools", icon='TOOL_SETTINGS')
-        box.operator("object.apply_delaunay", text="Apply Delaunay", icon='MOD_TRIANGULATE')
+        row.operator("object.group_objects", text="Group", icon='GROUP')
+        row.operator("object.delete_hierarchy", text="Delete Hierarchy", icon='X')
 
         box = layout.box()
         box.label(text="GoB - Paraview Bridge", icon='LINKED')
-        
+        row = box.row(align=True)
         gob = context.scene.gob_settings
-        box.prop(gob, "host")
-        box.prop(gob, "port")
-        
+        row.prop(gob, "host", text="Host")
+        row.prop(gob, "port", text="Port")
+        row = box.row(align=True)
         if not gob.is_connected:
-            box.operator("gob.connect_to_paraview", text="Connect to Paraview", icon='LINKED')
+            row.operator("gob.connect_to_paraview", text="Connect", icon='LINKED')
         else:
-            row = box.row(align=True)
             row.operator("gob.refresh_from_paraview", text="Refresh", icon='FILE_REFRESH')
             row.operator("gob.disconnect_from_paraview", text="Disconnect", icon='UNLINKED')
 
 classes = (
-    ImportStaticX3DOperator,
-    ImportX3DAnimationOperator,
+    ImportX3DOperator,
     ImportVTKAnimationOperator,
     ImportNetCDFOperator,
+    ImportShapefileOperator,
     CreateSharedMaterialOperator,
     ApplySharedMaterialOperator,
     RemoveAllShadersOperator,
@@ -188,9 +190,6 @@ classes = (
     ParentNullToGeoOperator,
     NullToOriginOperator,
     CreateSceneOperator,
-    X3DImportSettings,
-    ImportShapefileOperator,
-    SciBlendPanel,
     BooleanCutterOperator,
     BooleanCutterHideOperator,
     AddMeshCutterOperator,
@@ -201,36 +200,20 @@ classes = (
     GOB_OT_connect_to_paraview,
     GOB_OT_disconnect_from_paraview,
     GOB_OT_refresh_from_paraview,
+    X3DImportSettings,
+    SciBlendPanel,
 )
 
 def register():
     global preview_collection
-    try:
-        preview_collection = bpy.utils.previews.new()
-        icons_dir = os.path.join(os.path.dirname(__file__), "icons")
-        preview_collection.load("custom_icon", os.path.join(icons_dir, "logo.png"), 'IMAGE')
-    except Exception as e:
-        print(f"Warning: Could not load previews: {e}")
-        preview_collection = None
+    preview_collection = bpy.utils.previews.new()
 
     for cls in classes:
-        try:
-            bpy.utils.register_class(cls)
-        except Exception as e:
-            print(f"Error registering {cls.__name__}: {e}")
-            
+        bpy.utils.register_class(cls)
+
     bpy.types.Scene.x3d_import_settings = bpy.props.PointerProperty(type=X3DImportSettings)
-    bpy.types.Scene.boolean_cutter_object = bpy.props.StringProperty(name="Boolean Cutter Object")
-    bpy.types.Scene.new_cutter_mesh = bpy.props.EnumProperty(
-        name="New Boolean",
-        items=[
-            ("CUBE", "Cube", "Add a cube"),
-            ("SPHERE", "Sphere", "Add a sphere"),
-            ("CYLINDER", "Cylinder", "Add a cylinder"),
-            ("CONE", "Cone", "Add a cone"),
-            ("TORUS", "Torus", "Add a torus")
-        ]
-    )
+    bpy.types.Scene.boolean_cutter_object = bpy.props.PointerProperty(type=bpy.types.Object)
+    bpy.types.Scene.new_cutter_mesh = bpy.props.PointerProperty(type=bpy.types.Object)
     bpy.types.Scene.group_type = bpy.props.EnumProperty(
         name="Group Type",
         items=[
@@ -259,9 +242,9 @@ if __name__ == "__main__":
 
 bl_info = {
     "name": "SciBlend",
-    "author": "Your Name",
+    "author": "José Marín",
     "version": (1, 0),
-    "blender": (2, 80, 0),
+    "blender": (4, 5, 1),
     "location": "View3D > Sidebar > SciBlend Advanced Core",
     "description": "Scientific visualization tools for Blender",
     "warning": "",
