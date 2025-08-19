@@ -1,33 +1,30 @@
 # SciBlend Advanced Core
 
-
-[![Blender 4.5.1+](https://img.shields.io/badge/Blender-4.5.1%2B-orange?logo=blender)](https://www.blender.org)
+[![Blender 4.5.1+](https://img.shields.io/badge/Blender-4.5.1%2B-orange?logo=blender&logoColor=white)](https://www.blender.org)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](LICENSE)
 
 ![SciBlend Banner](images/banner.png)
 
-
 SciBlend Advanced Core bridges the gap between scientific data processing and high-quality 3D visualization. By integrating VTK, VTU, PVTU, NetCDF, and Shapefile capabilities directly into Blender, allowing researchers and scientists to create stunning, photorealistic visualizations of complex scientific and geospatial data.
-
-
-
-
-
-
-
-
-
-
 
 ## Download v.4.0.0
 
-- [![Linux x64](https://img.shields.io/badge/Download-Linux%20x64-2ea44f?logo=linux)](https://github.com/OWNER/REPO/releases/latest/download/sciblend_advanced_core-4.0.0-linux_x64.zip)
-- [![Windows x64](https://img.shields.io/badge/Download-Windows%20x64-2ea44f?logo=windows)](https://github.com/OWNER/REPO/releases/latest/download/sciblend_advanced_core-4.0.0-windows_x64.zip)
-- [![macOS x64](https://img.shields.io/badge/Download-macOS%20x64-2ea44f?logo=apple)](https://github.com/OWNER/REPO/releases/latest/download/sciblend_advanced_core-4.0.0-macos_x64.zip)
-- [![macOS arm64](https://img.shields.io/badge/Download-macOS%20arm64-2ea44f?logo=apple)](https://github.com/OWNER/REPO/releases/latest/download/sciblend_advanced_core-4.0.0-macos_arm64.zip)
+<p>
+  <a href="https://github.com/josemarinfarina/SciBlend-AdvancedCore/releases/download/v.4.0.0/sciblend_advanced_core-4.0.0-linux-x64.zip">
+    <img src="https://img.shields.io/badge/Linux_x64-Download-2ea44f?logo=linux&logoColor=white" alt="Linux x64"/>
+  </a>
+  <a href="https://github.com/josemarinfarina/SciBlend-AdvancedCore/releases/download/v.4.0.0/sciblend_advanced_core-4.0.0-windows-x64.zip">
+    <img src="https://img.shields.io/badge/Windows_x64-Download-2ea44f?logo=windows&logoColor=white" alt="Windows x64"/>
+  </a>
+  <a href="https://github.com/josemarinfarina/SciBlend-AdvancedCore/releases/download/v.4.0.0/sciblend_advanced_core-4.0.0-macos-x64.zip">
+    <img src="https://img.shields.io/badge/macOS_x64-Download-2ea44f?logo=apple&logoColor=white" alt="macOS x64"/>
+  </a>
+  <a href="https://github.com/josemarinfarina/SciBlend-AdvancedCore/releases/download/v.4.0.0/sciblend_advanced_core-4.0.0-macos-arm64.zip">
+    <img src="https://img.shields.io/badge/macOS_arm64-Download-2ea44f?logo=apple&logoColor=white" alt="macOS arm64"/>
+  </a>
+</p>
 
-Tip: If the direct links don’t match your release tag/file names, go to Releases and download the ZIP for your platform. The extension contains all required Python wheels and works fully offline.
-
+Tip: If the direct links do not match your release tag/file names, go to Releases and download the ZIP for your platform. The extension contains all required Python wheels and works fully offline.
 
 ## What is it?
 SciBlend Advanced Core boosts Blender with scientific data workflows:
@@ -58,17 +55,6 @@ CLI (optional):
   - “Import Static/Animation X3D”
 - For single-file VTK imports the object is visible immediately; for sequences, frame visibility is keyframed.
 
-## Gallery
-
-![Aorta Visualization](images/AORTA_RENDER.png)
-*Illustrative frame from the Aorta Dataset. A semitransparent render of the aorta wall containing flow streamlines and velocity glyphs. Shader is encoded by velocity magnitude [m/s] using a black–blue–white colourmap. Visualizations were rendered with Cycles Render and imported using SciBlend Advanced Core*
-
-![Global Temperature Visualization](images/NC_RENDER6.jpg)
-*Climate data from Copernicus Dataset imported from NetCDF format via SciBlend Advanced Core with the Spherical Projection feature and rendered with Cycles.*
-
-![Terrain Visualization](images/shapefile_figure_blackBG.png)
-*Three-dimensional rendering of topographic data from a Shapefile file. Colour intensity on the contour lines corresponds to elevation magnitude [m], mapped via a black-blue-white colourmap. The underlying spatial connectivity is represented by a Delaunay triangulation of the vertices achieved with SciBlend Advanced Core module, shown in black lines.*
-
 
 ## 📜 Citing SciBlend
 
@@ -78,36 +64,33 @@ If SciBlend or its components are used in research or publications, please inclu
 
 ```
 @article{marin2025,
-title = {SciBlend: Advanced data visualization workflows within Blender},
-journal = {Computers & Graphics},
-volume = {130},
-pages = {104264},
-year = {2025},
-issn = {0097-8493},
-doi = {https://doi.org/10.1016/j.cag.2025.104264},
-url = {https://www.sciencedirect.com/science/article/pii/S0097849325001050},
-author = {José Marín and Tiffany M.G. Baptiste and Cristobal Rodero and Steven E. Williams and Steven A. Niederer and Ignacio García-Fernández},
-keywords = {Scientific visualisation, Blender, Paraview, Data rendering, Visual storytelling, Scientific communication}
+ title = {SciBlend: Advanced data visualization workflows within Blender},
+ journal = {Computers & Graphics},
+ volume = {130},
+ pages = {104264},
+ year = {2025},
+ issn = {0097-8493},
+ doi = {https://doi.org/10.1016/j.cag.2025.104264},
+ url = {https://www.sciencedirect.com/science/article/pii/S0097849325001050},
+ author = {José Marín and Tiffany M.G. Baptiste and Cristobal Rodero and Steven E. Williams and Steven A. Niederer and Ignacio García-Fernández},
+ keywords = {Scientific visualisation, Blender, Paraview, Data rendering, Visual storytelling, Scientific communication}
 }
 ```
 
 3.  **The Software Suite:**
 ```
 @software{sciblend2025,
-doi = {10.5281/ZENODO.15420392},
-url = {https://zenodo.org/doi/10.5281/zenodo.15420392},
-author = {José Marín},
-title = {SciBlend: Advanced Data Visualization Workflows within Blender - Software},
-publisher = {Zenodo},
-year = {2025},
-copyright = {Creative Commons Attribution 4.0 International}
+ doi = {10.5281/ZENODO.15420392},
+ url = {https://zenodo.org/doi/10.5281/zenodo.15420392},
+ author = {José Marín},
+ title = {SciBlend: Advanced Data Visualization Workflows within Blender - Software},
+ publisher = {Zenodo},
+ year = {2025},
+ copyright = {Creative Commons Attribution 4.0 International}
 }
 ```
 
-
 (Source code: https://github.com/SciBlend/SciBlend)
-
-
 
 ## Support
 For questions, issues, or feature requests, please use the GitHub issue tracker or contact the maintainer at info@sciblend.com.
