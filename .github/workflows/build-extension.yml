@@ -3,16 +3,15 @@ name: Build SciBlend Extension
 on:
   push:
     branches: [ main, master ]
+    tags:
+      - 'v*'
     paths:
       - 'blender_manifest.toml'
-      - 'constraints.txt'
       - 'SciBlend/**'
       - 'scripts/**'
       - '.github/workflows/build-extension.yml'
   pull_request:
     branches: [ main, master ]
-  tags:
-    - 'v*'
 
 jobs:
   build-matrix:
